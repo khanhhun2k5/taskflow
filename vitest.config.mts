@@ -6,6 +6,15 @@ const alias = { "@": fileURLToPath(new URL("./src", import.meta.url)) };
 export default defineConfig({
   resolve: { alias },
   test: {
+    // NFR-61: line coverage ≥ 90% for pure domain code and shared helpers.
+    // Run with `npm run test:coverage` (all projects, so PostgreSQL must be running).
+    coverage: {
+      provider: "v8",
+      include: ["src/features/**/domain/**", "src/lib/**"],
+      exclude: ["**/*.test.{ts,tsx}"],
+      reporter: ["text-summary", "text"],
+      thresholds: { lines: 90 },
+    },
     projects: [
       {
         resolve: { alias },

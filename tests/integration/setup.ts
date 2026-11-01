@@ -21,6 +21,18 @@ const admin = new Client({ connectionString: baseUrl.toString() });
 await admin.connect();
 await admin.query(`CREATE SCHEMA "${schema}"`);
 
+// Extensions are database-wide (installed in "public" by the MVP-1 migration). Test files
+// run in parallel, and concurrent CREATE EXTENSION calls can fail with a duplicate-key
+// error, so create them once here under an advisory lock; the migration's
+// IF NOT EXISTS then becomes a no-op.
+await admin.query("SELECT pg_advisory_lock(hashtext('taskflow_test_extensions'))");
+try {
+  await admin.query('CREATE EXTENSION IF NOT EXISTS "unaccent" WITH SCHEMA public');
+  await admin.query('CREATE EXTENSION IF NOT EXISTS "pg_trgm" WITH SCHEMA public');
+} finally {
+  await admin.query("SELECT pg_advisory_unlock(hashtext('taskflow_test_extensions'))");
+}
+
 execSync("npx prisma migrate deploy", {
   env: { ...process.env, DATABASE_URL: schemaUrl.toString() },
   stdio: "pipe",
