@@ -127,4 +127,20 @@
   html {
     @apply font-sans;
   }
+  /* docs/06 section 7: 16px base on phones, 14px on desktop. */
+  body {
+    @apply text-base lg:text-sm;
+  }
+}
+
+/* NFR-25: honour reduced-motion preferences. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

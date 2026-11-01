@@ -1,22 +1,22 @@
-import type { InputHTMLAttributes } from "react";
+import type { ComponentProps } from "react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
-type FormFieldProps = InputHTMLAttributes<HTMLInputElement> & {
+type FormFieldProps = ComponentProps<"input"> & {
   id: string;
   label: string;
   error?: string;
 };
 
-// Minimal labelled input; replaced by shadcn Form components in P0 part c.
-export function FormField({ id, label, error, ...inputProps }: FormFieldProps) {
+/** Labelled input with an accessible error message (NFR-21). */
+export function FormField({ id, label, error, className, ...inputProps }: FormFieldProps) {
   const errorId = `${id}-error`;
   return (
-    <div className="flex flex-col gap-1">
-      <label htmlFor={id} className="text-sm font-medium">
-        {label}
-      </label>
-      <input
+    <div className="flex flex-col gap-2">
+      <Label htmlFor={id}>{label}</Label>
+      <Input
         id={id}
-        className="h-9 rounded-md border border-input bg-background px-3 text-sm"
+        className={className ?? "h-11 md:h-9"}
         aria-invalid={error ? true : undefined}
         aria-describedby={error ? errorId : undefined}
         {...inputProps}
