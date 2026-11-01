@@ -115,6 +115,16 @@ describe("GET /tasks", () => {
     expect(inbox.some((t) => t.title === "F parent")).toBe(true);
   });
 
+  it("topLevel=true leaves out subtasks (project ListView)", async () => {
+    const fx = await createProject(user, "Top level");
+    const parent = await createTask(user, { title: "Parent", projectId: fx.project.id });
+    await createTask(user, { title: "Child", parentId: parent.id });
+    const all = await allPages(`/tasks?projectId=${fx.project.id}`, 50);
+    const top = await allPages(`/tasks?projectId=${fx.project.id}&topLevel=true`, 50);
+    expect(all.map((task) => task.title).sort()).toEqual(["Child", "Parent"]);
+    expect(top.map((task) => task.title)).toEqual(["Parent"]);
+  });
+
   it("sort=priority orders URGENT first and ties by id", async () => {
     const items = await allPages("/tasks?sort=priority", 200);
     const rank = { URGENT: 0, HIGH: 1, MEDIUM: 2, LOW: 3 } as const;

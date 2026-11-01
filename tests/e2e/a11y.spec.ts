@@ -34,12 +34,22 @@ for (const colorScheme of ["light", "dark"] as const) {
     });
 
     test("MVP-1 pages have no serious axe violations", async ({ page }) => {
+      test.setTimeout(90_000); // five pages, one axe run each
       await registerNewUser(page);
       const projectId = await seedData(page);
       const pages = [
         { path: "/inbox", heading: "Hộp thư", ready: "Việc trễ hạn" },
         { path: "/projects", heading: "Dự án", ready: "Dự án A11y" },
-        { path: `/projects/${projectId}`, heading: "Dự án A11y", ready: "Việc trong dự án" },
+        {
+          path: `/projects/${projectId}?view=kanban`,
+          heading: "Dự án A11y",
+          ready: "Việc trong dự án",
+        },
+        {
+          path: `/projects/${projectId}?view=list`,
+          heading: "Dự án A11y",
+          ready: "Việc trong dự án",
+        },
         { path: "/trash", heading: "Thùng rác", ready: "Việc đã xóa" },
       ];
       for (const { path, heading, ready } of pages) {

@@ -7,6 +7,7 @@ import {
   isOverdue,
   parseIsoDate,
   startOfDayInTz,
+  endOfZonedDayIso,
   utcToZonedParts,
   zonedToUtcIso,
 } from "./dates";
@@ -142,5 +143,16 @@ describe("zoned wall-clock ↔ UTC (due-date picker)", () => {
     expect(() => zonedToUtcIso("2026-02-30", null, "UTC")).toThrow(RangeError);
     expect(() => zonedToUtcIso("2026-11-03", null, "Mars/Base")).toThrow(RangeError);
     expect(() => utcToZonedParts("2026-11-03T00:00:00.000Z", "Mars/Base")).toThrow(RangeError);
+  });
+});
+
+describe("endOfZonedDayIso (dueTo filter)", () => {
+  it("is the last millisecond of the day in the user's zone", () => {
+    expect(endOfZonedDayIso("2026-11-03", "Asia/Ho_Chi_Minh")).toBe("2026-11-03T16:59:59.999Z");
+  });
+
+  it("handles 23- and 25-hour DST days", () => {
+    expect(endOfZonedDayIso("2026-03-08", NEW_YORK)).toBe("2026-03-09T03:59:59.999Z");
+    expect(endOfZonedDayIso("2026-11-01", NEW_YORK)).toBe("2026-11-02T04:59:59.999Z");
   });
 });

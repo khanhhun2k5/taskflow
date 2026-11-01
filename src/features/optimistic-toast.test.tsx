@@ -5,7 +5,10 @@ import { TaskRow } from "@/components/task/task-row";
 import { Toaster } from "@/components/ui/sonner";
 import { queryKeys } from "@/features/query-keys";
 import { draftTask } from "@/features/tasks/cache";
-import { useInboxTasks, useRestore, useSetTaskStatus } from "@/features/tasks/hooks";
+import { allItems, firstPage, type Pages } from "@/features/infinite";
+import { useSetTaskStatus } from "@/features/tasks/hooks";
+import { useTaskList } from "@/features/tasks/list-hooks";
+import { useRestore } from "@/features/tasks/trash-hooks";
 import type { TrashItemDTO } from "@/features/tasks/schemas";
 import { createTestQueryClient, renderWithIntl } from "@/test/intl";
 
@@ -21,11 +24,11 @@ const errorResponse = (status: number, code: string) =>
 const task = draftTask("t1", "Viết báo cáo", {}, "2026-11-01T00:00:00.000Z");
 
 function Inbox() {
-  const tasks = useInboxTasks();
+  const tasks = useTaskList({ inbox: true }, {});
   const setStatus = useSetTaskStatus();
   return (
     <ul>
-      {tasks.data?.items.map((item) => (
+      {allItems(tasks.data).map((item) => (
         <TaskRow
           key={item.id}
           task={item}
@@ -39,10 +42,10 @@ function Inbox() {
 
 function renderInbox() {
   const queryClient = createTestQueryClient();
-  queryClient.setQueryData(queryKeys.tasks.list({ inbox: true }), {
-    items: [task],
-    nextCursor: null,
-  });
+  queryClient.setQueryData(
+    queryKeys.tasks.list({ inbox: true }, {}),
+    firstPage({ items: [task], nextCursor: null }),
+  );
   renderWithIntl(
     <>
       <Inbox />
@@ -106,7 +109,7 @@ describe("optimistic mutations", () => {
       projectId: null,
       deletedAt: "2026-11-01T00:00:00.000Z",
     };
-    queryClient.setQueryData(queryKeys.trash.all, { items: [item], nextCursor: null });
+    queryClient.setQueryData(queryKeys.trash.all, firstPage({ items: [item], nextCursor: null }));
 
     function RestoreButton() {
       const restore = useRestore();
@@ -133,8 +136,8 @@ describe("optimistic mutations", () => {
       within(toastElement as HTMLElement).queryByRole("button", { name: "Thử lại" }),
     ).toBeNull();
     // Rolled back: the item is back in the trash cache.
-    expect(queryClient.getQueryData<{ items: TrashItemDTO[] }>(queryKeys.trash.all)?.items).toEqual(
-      [item],
-    );
+    expect(allItems(queryClient.getQueryData<Pages<TrashItemDTO>>(queryKeys.trash.all))).toEqual([
+      item,
+    ]);
   });
 });
