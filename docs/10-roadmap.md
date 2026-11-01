@@ -29,10 +29,10 @@ Thời lượng ước tính cho **một người làm bán thời gian** (kho�
 
 **Xong khi**
 
-- [ ] US-01, US-02, US-03 đạt tiêu chí chấp nhận.
-- [ ] TC-90 (phần đăng ký → Hôm nay) chạy qua.
-- [ ] CI xanh trên pull request.
-- [ ] `.env.example` đầy đủ; README hướng dẫn chạy từ đầu trong ≤ 5 lệnh.
+- [x] US-01, US-02, US-03 đạt tiêu chí chấp nhận. _(2026-11-01: `tests/integration/auth.test.ts`, `me.test.ts`; E2E `auth.spec.ts` — đăng ký vào thẳng Hôm nay, ẩn nút Google khi chưa cấu hình.)_
+- [x] TC-90 (phần đăng ký → Hôm nay) chạy qua. _(2026-11-01: `npm run test:e2e`, 11/11 qua, kèm axe sáng/tối trên `/login`, `/today`.)_
+- [ ] CI xanh trên pull request. _(Đã có `.github/workflows/ci.yml`; chưa push/mở PR nên chưa kiểm chứng.)_
+- [x] `.env.example` đầy đủ; README hướng dẫn chạy từ đầu trong ≤ 5 lệnh. _(2026-11-01: `.env.example` khớp file 03 mục 5; `npm run env:init` và `prisma migrate dev` đã thử trên DB trống.)_
 
 ## MVP-1. Việc, dự án, Kanban
 
