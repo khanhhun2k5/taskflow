@@ -1,8 +1,8 @@
 "use client";
 
-import type { DragEndEvent, DragOverEvent } from "@dnd-kit/core";
+import type { DragEndEvent, DragOverEvent, DragStartEvent } from "@dnd-kit/core";
 import { useQueryClient } from "@tanstack/react-query";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   dropTargetFromOver,
   locate,
@@ -35,6 +35,8 @@ export function useBoardDrag(board: BoardDTO, setDragging: (dragging: boolean) =
   const move = useMoveTask();
   const pending = usePendingMoves(board.id);
   const [draft, setDraft] = useState<ColumnOrder[] | null>(null);
+  /** The card under the pointer, drawn in the DragOverlay (docs/06 section 4.4). */
+  const [activeId, setActiveId] = useState<string | null>(null);
   const [settling, setSettling] = useState<{ id: string; order: ColumnOrder[] } | null>(null);
   const start = useRef<ColumnOrder[]>([]);
   const lastDrop = useRef(0);
@@ -48,17 +50,20 @@ export function useBoardDrag(board: BoardDTO, setDragging: (dragging: boolean) =
     orderRef.current = order;
   });
 
-  // Picking up renders nothing new (no state change): dnd-kit's keyboard sensor starts
-  // listening only after a timeout, and a re-render of a 500-card board would delay it.
-  // The draft appears with the first cross-column move.
+  // Picking up only sets the overlay card (memoized columns do not re-render); the draft
+  // appears with the first cross-column move.
   const working = () => draft ?? start.current;
 
-  function onDragStart() {
+  // Stable, so memoized cards do not re-render because of it.
+  const justDropped = useCallback(() => Date.now() - lastDrop.current < 250, []);
+
+  function onDragStart(event: DragStartEvent) {
     // A refetch already on its way must not land mid-drag with the old order.
     void qc.cancelQueries({ queryKey: queryKeys.boards.detail(board.id) });
     start.current = toOrder(board);
     orderRef.current = start.current;
     setDragging(true);
+    setActiveId(String(event.active.id));
   }
 
   function onDragOver(event: DragOverEvent) {
@@ -74,6 +79,7 @@ export function useBoardDrag(board: BoardDTO, setDragging: (dragging: boolean) =
 
   function finish() {
     setDraft(null);
+    setActiveId(null);
     setDragging(false);
     lastDrop.current = Date.now();
   }
@@ -109,6 +115,7 @@ export function useBoardDrag(board: BoardDTO, setDragging: (dragging: boolean) =
     order,
     orderRef,
     handlers: { onDragStart, onDragOver, onDragEnd, onDragCancel: finish },
-    justDropped: () => Date.now() - lastDrop.current < 250,
+    activeId,
+    justDropped,
   };
 }

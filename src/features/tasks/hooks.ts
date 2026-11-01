@@ -144,8 +144,17 @@ export function useMoveTask() {
       }),
     affects: TASK_CACHES,
     invalidate: DERIVED,
+    // NFR-03: the answer is the moved TaskDTO; write it into the board and lists instead of
+    // refetching a 500-task board. Only derived progress is refetched.
+    successInvalidate: [queryKeys.projects.all],
     apply: (qc, move) => moveTaskInCaches(qc, move, move.statusCategory),
-    onSuccess: (_qc, result) => warn(result),
+    onSuccess: (qc, { warnings, ...task }, move) => {
+      // Re-apply the confirmed move: the cache may hold data fetched while /move was in
+      // flight (shown correctly only thanks to the pending-move overlay, now gone).
+      moveTaskInCaches(qc, move, task.statusCategory);
+      patchTaskInCaches(qc, task.id, task);
+      warn({ warnings });
+    },
   });
 }
 

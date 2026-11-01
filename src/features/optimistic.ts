@@ -23,6 +23,11 @@ type OptimisticOptions<TVars, TData> = {
   affects: readonly QueryKey[];
   /** Extra prefixes to invalidate after the mutation settles (e.g. derived progress). */
   invalidate?: readonly QueryKey[];
+  /**
+   * On success, invalidate only these (the caller already wrote the server's answer into the
+   * cache). Errors still invalidate affects + invalidate to show the server's truth.
+   */
+  successInvalidate?: readonly QueryKey[];
   /** Edits the cache before the request is sent (docs/06 section 1, NFR-04). */
   apply: (qc: QueryClient, vars: TVars) => void;
   /**
@@ -81,7 +86,13 @@ export function useOptimisticMutation<TVars, TData>(options: OptimisticOptions<T
       showError(error, () => mutation.mutate(vars));
     },
     onSuccess: (data, vars) => options.onSuccess?.(qc, data, vars),
-    onSettled: () => invalidateWhenIdle(qc, [...affects, ...invalidate]),
+    onSettled: (_data, error) =>
+      invalidateWhenIdle(
+        qc,
+        error || !options.successInvalidate
+          ? [...affects, ...invalidate]
+          : options.successInvalidate,
+      ),
   });
   return mutation;
 }

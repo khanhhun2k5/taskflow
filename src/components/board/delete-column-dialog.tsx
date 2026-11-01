@@ -1,5 +1,6 @@
 "use client";
 
+import type { ColumnMeta } from "./board-layout";
 import { useTranslations } from "next-intl";
 import { useId, useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -24,7 +25,7 @@ type Column = BoardDTO["columns"][number];
 
 type Props = {
   column: Column;
-  others: Column[];
+  others: ColumnMeta[];
   onDelete: (moveTo: string | undefined) => void;
   onClose: () => void;
 };

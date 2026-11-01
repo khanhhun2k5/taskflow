@@ -3,6 +3,7 @@
 import {
   closestCorners,
   DndContext,
+  DragOverlay,
   KeyboardSensor,
   PointerSensor,
   TouchSensor,
@@ -16,10 +17,10 @@ import { ListRowsSkeleton } from "@/components/common/list-skeleton";
 import { useBoard, usePendingMoves, withPendingMoves } from "@/features/boards/hooks";
 import type { BoardDTO } from "@/features/boards/schemas";
 import { BoardColumn } from "./board-column";
-import { arrange, KEYBOARD_CODES, MEASURING } from "./board-layout";
+import { arrange, KEYBOARD_CODES, type ColumnMeta } from "./board-layout";
+import { TaskCardOverlay } from "./task-card";
 import { useBoardAnnouncements } from "./use-board-announcements";
 import { useBoardDrag } from "./use-board-drag";
-import { useColumnActions } from "./use-column-actions";
 
 type Props = {
   boardId: string;
@@ -98,14 +99,21 @@ function Board({
     setFrozen(dragging ? liveBoard : null);
   });
   const accessibility = useBoardAnnouncements(board, drag.orderRef);
-  const actionsFor = useColumnActions(board);
   const shown = useMemo(() => arrange(board, drag.order), [board, drag.order]);
+  // Same array while column ids and names stay the same (columns are memoized on it).
+  const signature = JSON.stringify(board.columns.map((c) => [c.id, c.name]));
+  const columns = useMemo<ColumnMeta[]>(
+    () => (JSON.parse(signature) as [string, string][]).map(([id, name]) => ({ id, name })),
+    [signature],
+  );
+  const active = drag.activeId
+    ? board.columns.flatMap((c) => c.tasks).find((task) => task.id === drag.activeId)
+    : undefined;
 
   return (
     <DndContext
       sensors={sensors}
       collisionDetection={closestCorners}
-      measuring={MEASURING}
       accessibility={accessibility}
       {...drag.handlers}
     >
@@ -114,16 +122,21 @@ function Board({
           <BoardColumn
             key={column.id}
             column={column}
-            board={shown}
+            boardId={board.id}
             projectId={projectId}
             index={index}
+            columns={columns}
             readOnly={readOnly}
-            actions={actionsFor(column.id)}
             onOpen={onOpen}
             justDropped={drag.justDropped}
           />
         ))}
       </div>
+      {/* The dragged card follows the pointer here; list items only shift (NFR-03). No drop
+          animation: the optimistic layout already shows the card in its new place. */}
+      <DragOverlay dropAnimation={null}>
+        {active ? <TaskCardOverlay task={active} /> : null}
+      </DragOverlay>
     </DndContext>
   );
 }

@@ -131,13 +131,16 @@ describe("Kanban drop (optimistic /move)", () => {
     expect(cards("Cần làm")).toEqual(["A"]);
 
     server = moved;
+    const getsBefore = fetchMock.mock.calls.filter(([, init]) => !init?.method).length;
     act(() => succeed(new Response(JSON.stringify({ ...task("B", "done"), warnings: [] }))));
-    await waitFor(() =>
-      expect(
-        fetchMock.mock.calls.filter(([, init]) => !init?.method || init.method === "GET").length,
-      ).toBeGreaterThan(0),
-    );
+    await waitFor(() => expect(queryClient.isMutating()).toBe(0));
     await waitFor(() => expect(cards("Xong")).toEqual(["B"]));
     expect(cards("Cần làm")).toEqual(["A"]);
+    // NFR-03: the /move answer is written into the board; the board is not fetched again.
+    const boardGets = fetchMock.mock.calls
+      .slice(getsBefore)
+      .filter(([url, init]) => !init?.method && String(url).includes("/boards/"));
+    expect(boardGets).toHaveLength(0);
+    expect(server).toBe(moved);
   });
 });

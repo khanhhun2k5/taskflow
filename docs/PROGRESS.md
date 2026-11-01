@@ -49,26 +49,26 @@ Checklist "Xong khi" của P0 trong file 10: đạt cả 4 mục.
 
 ## Việc tiếp theo
 
-**NFR-03 (500 việc) chưa đạt** — đo 2026-11-01 bằng Playwright + React Profiler (bản build `next build --profile`, dữ liệu `npm run db:seed:large`), máy dev:
+**NFR-03 (500 việc) vẫn chưa đạt sau tối ưu** — tiêu chí: CPU thường, trung bình ≥ 50 fps khi kéo. Đo 2026-11-01 bằng Playwright + React Profiler (bản build `next build --profile`, `npm run db:seed:large` và `npm run db:seed:large -- 100`), máy dev, cùng một kịch bản: mở bảng, kéo thẻ đầu tiên của "Cần làm" sang "Đang làm" bằng chuột. "Trước" = commit `151d301`, "sau" = commit perf (memo + props ổn định, `DragOverlay`, đo mặc định khi đang kéo, ghi `TaskDTO` của `/move` vào cache thay vì tải lại bảng).
 
-| | CPU thường | CPU chậm ×4 |
-|---|---|---|
-| Thẻ đầu tiên hiện sau khi mở trang | 1,5 s | 3,1 s |
-| Khung hình khi kéo (trung bình / p95 / tệ nhất) | 25 fps / 167 ms / 1,2 s | 4 fps / 917 ms / 8,2 s |
-| Long task khi kéo (số / dài nhất) | 12 / 1,1 s | 63 / 7,8 s |
-| React commit khi kéo (trung vị / lớn nhất) | 9,9 ms / 253 ms | 59 ms / 1,6 s |
+| Chỉ số (CPU thường) | 500 việc trước | 500 việc sau | 100 việc trước | 100 việc sau |
+|---|---|---|---|---|
+| **Khung hình khi kéo, trung bình** | 25 fps | **45 fps** ❌ | 54 fps | **58 fps** ✅ |
+| Khung hình p95 / tệ nhất | 167 ms / 1,2 s | 17 ms / 250 ms | 17 ms / 100 ms | 17 ms / 50 ms |
+| Long task khi kéo (số / dài nhất) | 12 / 1,1 s | 4 / 238 ms | 4 / 115 ms | 1 / 57 ms |
+| React commit (trung vị / lớn nhất / tổng) | 9,9 / 253 / 2954 ms | 4,2 / 69 / 727 ms | 1,4 / 24 / 378 ms | 1,1 / 17 / 183 ms |
+| Thả → commit cuối cùng | 2,1 s | 0,54 s | 0,34 s | 0,28 s |
+| Thẻ đầu tiên hiện sau khi mở trang | 1,5 s | 1,0 s | 0,48 s | 0,44 s |
 
-Thẻ đã nằm ở cột đích ngay trong lúc kéo (không có độ trễ riêng khi thả), nhưng sau khi thả còn khoảng 2 s (CPU thường) render lại khi dữ liệu tải về.
+Tham khảo, CPU chậm ×4 (trung bình fps / long task dài nhất): 500 việc 4 → 15 fps / 7,8 → 2,0 s; 100 việc 26 → 35 fps / 1,2 → 0,6 s.
 
-Nguyên nhân chính: mỗi lần kéo sang cột khác, cả 500 thẻ render lại (`arrange()` tạo object mới cho mọi việc; `board`, `actions` đổi tham chiếu mỗi lần render) và `MeasuringStrategy.BeforeDragging` đo lại cả 500 phần tử. Đề xuất sửa (chưa làm, chờ duyệt):
+Phần còn chậm ở 500 việc là vài long task (≈ 0,2 s) lúc nhặt thẻ và khi thẻ vào/ra cột 250 thẻ: dnd-kit đo lại vị trí mọi thẻ khi bắt đầu kéo, và mọi thẻ trong cột dùng `useSortable` render lại mỗi khi thứ tự trong `SortableContext` đổi (`memo` không chặn được vì đó là context). Bước tiếp đề xuất (chưa làm):
 
-1. Giữ nguyên tham chiếu các việc không đổi trong `arrange()`; props ổn định cho `TaskCard`/`BoardColumn` để React bỏ qua thẻ không đổi.
-2. `DragOverlay` cho thẻ đang kéo.
-3. Ảo hóa hoặc "Hiện thêm" cho cột dài (vd. > 50 thẻ).
-4. Chỉ đo các cột thay vì mọi thẻ.
-5. Sau `/move` thành công không tải lại cả bảng (đã có phản hồi của server); chỉ làm mới tiến độ.
+1. `content-visibility: auto` + `contain-intrinsic-size` cho thẻ: trình duyệt bỏ qua layout/paint của thẻ ngoài màn hình, không đổi cây React nên không xung đột vùng thả.
+2. Tách phần `useSortable` khỏi phần hiển thị sâu hơn (thẻ ngoài vùng nhìn chỉ render khung tối thiểu), và đo lại sau bước 1.
+3. Nếu vẫn chưa đạt: ảo hóa cột (đề xuất c, đang hoãn vì xung đột vùng thả của sortable) hoặc "Hiện thêm" cho cột > 100 thẻ.
 
-**Việc tiếp theo:** sửa NFR-03 theo đề xuất trên, thử kéo bằng cảm ứng trên điện thoại (US-15), rồi mở PR MVP-1.
+**Việc tiếp theo:** quyết định bước tiếp cho NFR-03, thử kéo bằng cảm ứng trên điện thoại (US-15), rồi mở PR MVP-1.
 
 **Ghi chú kỹ thuật c2:** `KeyboardSensor` của dnd-kit chỉ bắt phím sau một `setTimeout` kể từ lúc nhặt, nên phím bấm ngay sau Space có thể mất (E2E TC-92 bấm lại khi bị mất). Lỗi thật đã sửa: dữ liệu bảng tải lại giữa lúc kéo làm mất nước đi bằng bàn phím → bảng được "đóng băng" trong lúc kéo.
 

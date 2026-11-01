@@ -1,5 +1,6 @@
 "use client";
 
+import type { ColumnMeta } from "./board-layout";
 import type { BoardDTO } from "@/features/boards/schemas";
 import type { ColumnActions } from "./column-header";
 import { ColumnFormDialog, type ColumnFormMode, type ColumnFormValues } from "./column-form-dialog";
@@ -12,7 +13,7 @@ export type ColumnDialog = ColumnFormMode | "add-left" | "add-right" | "delete" 
 type Props = {
   dialog: ColumnDialog;
   column: Column;
-  others: Column[];
+  others: ColumnMeta[];
   actions: ColumnActions;
   onClose: () => void;
 };

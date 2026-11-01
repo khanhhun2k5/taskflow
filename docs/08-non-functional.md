@@ -10,7 +10,7 @@ Yêu cầu phi chức năng mô tả hệ thống phải **tốt đến mức n�
 |---|---|---|
 | NFR-01 | Trang Hôm nay: Largest Contentful Paint ≤ 1,5 giây | Lighthouse trên bản build production |
 | NFR-02 | API đọc (`GET`) p95 ≤ 200 ms; API ghi p95 ≤ 300 ms (đo tại server, không tính mạng) | Ghi thời gian xử lý trong log, kiểm tra khi có dữ liệu mẫu lớn |
-| NFR-03 | Bảng Kanban 500 việc: kéo thả vẫn mượt (≥ 50 khung hình/giây) | Thử thủ công + Performance panel |
+| NFR-03 | Bảng Kanban 500 việc: kéo thả vẫn mượt (≥ 50 khung hình/giây) | Thử thủ công + Performance panel. **2026-11-01: chưa đạt** — 500 việc trung bình 45 fps khi kéo (CPU thường; trước tối ưu 25 fps); 100 việc 58 fps (đạt). Chi tiết và bước tiếp: `docs/PROGRESS.md` |
 | NFR-04 | Kéo thả phản hồi trên giao diện ≤ 100 ms (trước khi server trả lời) | Cập nhật lạc quan |
 | NFR-05 | Mọi truy vấn danh sách có chỉ mục phù hợp; không có truy vấn N+1 | Bật log truy vấn Prisma khi dev; rà soát khi review |
 | NFR-06 | Bundle JS của trang đầu ≤ 250 KB (đã nén) | `next build` báo cáo kích thước |

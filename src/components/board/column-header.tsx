@@ -1,5 +1,6 @@
 "use client";
 
+import type { ColumnMeta } from "./board-layout";
 import { MoreHorizontal, TriangleAlert } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
@@ -34,7 +35,7 @@ export type ColumnActions = {
 type Props = {
   column: Column;
   headingId: string;
-  others: Column[];
+  others: ColumnMeta[];
   canMove: { left: boolean; right: boolean };
   readOnly: boolean;
   actions: ColumnActions;

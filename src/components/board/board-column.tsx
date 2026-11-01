@@ -4,34 +4,42 @@ import { useDroppable } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { cn } from "cn";
 import { useTranslations } from "next-intl";
+import { memo, useMemo } from "react";
 import { QuickAdd } from "@/components/task/quick-add";
 import type { BoardDTO } from "@/features/boards/schemas";
 import { isTempId } from "@/features/query-keys";
 import { useCreateTask } from "@/features/tasks/hooks";
-import { ColumnHeader, type ColumnActions } from "./column-header";
+import type { ColumnMeta } from "./board-layout";
+import { ColumnHeader } from "./column-header";
 import { TaskCard } from "./task-card";
+import { useColumnActions } from "./use-column-actions";
 
 type Column = BoardDTO["columns"][number];
 
 type Props = {
   column: Column;
-  board: BoardDTO;
+  boardId: string;
   projectId: string;
   index: number;
+  /** Every column's id and name, stable while the board's columns stay the same. */
+  columns: ColumnMeta[];
   readOnly: boolean;
-  actions: ColumnActions;
   onOpen: (id: string) => void;
   justDropped: () => boolean;
 };
 
-/** One Kanban column (docs/06 section 4.4): scrolls on its own, compact QuickAdd at the end. */
-export function BoardColumn({
+/**
+ * One Kanban column (docs/06 section 4.4): scrolls on its own, compact QuickAdd at the end.
+ * Memoized with stable props (NFR-03): only the columns a dragged card enters or leaves
+ * render again.
+ */
+export const BoardColumn = memo(function BoardColumn({
   column,
-  board,
+  boardId,
   projectId,
   index,
+  columns,
   readOnly,
-  actions,
   onOpen,
   justDropped,
 }: Props) {
@@ -44,12 +52,10 @@ export function BoardColumn({
     data: { type: "column" },
     disabled: readOnly || saving,
   });
-  const { create } = useCreateTask({
-    kind: "project",
-    projectId,
-    boardId: board.id,
-    columnId: column.id,
-  });
+  const { create } = useCreateTask({ kind: "project", projectId, boardId, columnId: column.id });
+  const actions = useColumnActions(boardId, columns, column.id);
+  const others = useMemo(() => columns.filter((c) => c.id !== column.id), [columns, column.id]);
+  const ids = useMemo(() => column.tasks.map((task) => task.id), [column.tasks]);
   const over = column.wipLimit !== null && column.tasks.length > column.wipLimit;
 
   return (
@@ -63,16 +69,12 @@ export function BoardColumn({
       <ColumnHeader
         column={column}
         headingId={headingId}
-        others={board.columns.filter((c) => c.id !== column.id)}
-        canMove={{ left: index > 0, right: index < board.columns.length - 1 }}
+        others={others}
+        canMove={{ left: index > 0, right: index < columns.length - 1 }}
         readOnly={readOnly}
         actions={actions}
       />
-      <SortableContext
-        id={column.id}
-        items={column.tasks.map((task) => task.id)}
-        strategy={verticalListSortingStrategy}
-      >
+      <SortableContext id={column.id} items={ids} strategy={verticalListSortingStrategy}>
         <ul
           ref={setNodeRef}
           aria-labelledby={headingId}
@@ -105,4 +107,4 @@ export function BoardColumn({
       )}
     </section>
   );
-}
+});
