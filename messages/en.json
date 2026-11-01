@@ -1,0 +1,79 @@
+{
+  "Common": {
+    "appName": "TaskFlow",
+    "tagline": "Personal task management",
+    "comingSoon": "Coming soon",
+    "loading": "Loading…"
+  },
+  "Home": {
+    "openApp": "Open the app"
+  },
+  "Nav": {
+    "label": "Main navigation",
+    "today": "Today",
+    "inbox": "Inbox",
+    "calendar": "Calendar",
+    "courses": "Courses",
+    "projects": "Projects",
+    "coursesEmpty": "No courses yet",
+    "projectsEmpty": "No projects yet",
+    "addCourse": "Add course",
+    "addProject": "Add project",
+    "trash": "Trash",
+    "settings": "Settings",
+    "projectsAndCourses": "Projects & Courses",
+    "add": "Add"
+  },
+  "Header": {
+    "accountMenu": "Account",
+    "signOut": "Sign out"
+  },
+  "Theme": {
+    "toggle": "Change theme",
+    "light": "Light",
+    "dark": "Dark",
+    "system": "System"
+  },
+  "Auth": {
+    "or": "or",
+    "continueWithGoogle": "Continue with Google",
+    "fields": {
+      "name": "Name",
+      "email": "Email",
+      "password": "Password"
+    },
+    "login": {
+      "title": "Sign in",
+      "description": "Welcome back to TaskFlow.",
+      "submit": "Sign in",
+      "noAccount": "Don't have an account?",
+      "registerLink": "Sign up"
+    },
+    "register": {
+      "title": "Sign up",
+      "description": "Create an account to start organizing your work.",
+      "submit": "Sign up",
+      "haveAccount": "Already have an account?",
+      "loginLink": "Sign in"
+    },
+    "errors": {
+      "emailInvalid": "Invalid email address.",
+      "passwordRequired": "Enter your password.",
+      "nameInvalid": "Enter a name (at most {max} characters).",
+      "passwordTooShort": "Password must be at least {min} characters.",
+      "tooManyAttempts": "Too many attempts. Please wait a minute.",
+      "invalidCredentials": "Incorrect email or password.",
+      "emailTaken": "This email is already registered.",
+      "registerFailed": "Could not sign up. Please try again."
+    }
+  },
+  "Today": {
+    "title": "Today",
+    "empty": {
+      "title": "You're free today!",
+      "description": "Add a task or check this week's calendar.",
+      "addTask": "Add task",
+      "viewWeek": "View week"
+    }
+  }
+}
