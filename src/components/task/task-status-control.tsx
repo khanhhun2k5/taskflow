@@ -18,7 +18,9 @@ import type { TaskDTO } from "@/features/tasks/schemas";
  * docs/06 section 4.3: a task on a board changes status by changing column (POST /move,
  * ADR-03); a task without a column (inbox task, subtask) uses a checkbox (BR-02).
  */
-export function TaskStatusControl({ task, boardId }: { task: TaskDTO; boardId: string | null }) {
+type Props = { task: TaskDTO; boardId: string | null; readOnly?: boolean };
+
+export function TaskStatusControl({ task, boardId, readOnly = false }: Props) {
   const t = useTranslations("TaskDialog");
   const id = useId();
   // Decided by the task itself: a task with a column never uses the checkbox (ADR-03), even
@@ -34,6 +36,7 @@ export function TaskStatusControl({ task, boardId }: { task: TaskDTO; boardId: s
         <Checkbox
           id={id}
           checked={task.statusCategory === "DONE"}
+          disabled={readOnly}
           onCheckedChange={(checked) =>
             setStatus.mutate({ id: task.id, status: checked === true ? "DONE" : "TODO" })
           }
@@ -53,11 +56,20 @@ export function TaskStatusControl({ task, boardId }: { task: TaskDTO; boardId: s
       </label>
       <Select
         value={task.columnId ?? undefined}
-        disabled={columns.length === 0}
+        disabled={columns.length === 0 || readOnly}
         onValueChange={(columnId) => {
           const column = columns.find((c) => c.id === columnId);
           if (column && boardId && column.id !== task.columnId) {
-            move.mutate({ id: task.id, boardId, column });
+            // End of the target column (docs/05 POST /move: before = its last card).
+            const rest = column.tasks.filter((other) => other.id !== task.id);
+            move.mutate({
+              id: task.id,
+              boardId,
+              target: { columnId: column.id, index: rest.length },
+              statusCategory: column.statusCategory,
+              beforeId: rest.at(-1)?.id ?? null,
+              afterId: null,
+            });
           }
         }}
       >

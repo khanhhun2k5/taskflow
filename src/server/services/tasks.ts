@@ -347,6 +347,7 @@ export async function listTasks(
   if (query.sprintId) filters.push({ sprintId: query.sprintId });
   if (query.backlog) filters.push({ sprintId: null, parentId: null });
   if (query.parentId) filters.push({ parentId: query.parentId });
+  if (query.topLevel) filters.push({ parentId: null });
   if (query.overdue) {
     // Same rule as isOverdue (BR-04): all-day tasks are overdue from the next local midnight,
     // i.e. when their (local-midnight) dueAt is before today's local midnight.

@@ -10,6 +10,10 @@ type QuickAddProps = {
   label: string;
   placeholder: string;
   disabled?: boolean;
+  /** Smaller box at the end of a Kanban column. */
+  compact?: boolean;
+  /** The page's main box, focused by the "n" shortcut (docs/06 section 5). */
+  shortcutTarget?: boolean;
 };
 
 const MAX_TITLE = 300; // createTaskSchema
@@ -18,7 +22,14 @@ const MAX_TITLE = 300; // createTaskSchema
  * docs/06 section 4.1: Enter creates, the box empties and keeps focus; Esc clears and
  * leaves the box; empty or whitespace-only input does nothing.
  */
-export function QuickAdd({ onSubmit, label, placeholder, disabled }: QuickAddProps) {
+export function QuickAdd({
+  onSubmit,
+  label,
+  placeholder,
+  disabled,
+  compact = false,
+  shortcutTarget = false,
+}: QuickAddProps) {
   const [value, setValue] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
   const id = useId();
@@ -57,7 +68,8 @@ export function QuickAdd({ onSubmit, label, placeholder, disabled }: QuickAddPro
         placeholder={placeholder}
         autoComplete="off"
         enterKeyHint="done"
-        className="h-11 pl-9"
+        className={compact ? "h-9 pl-9 text-sm" : "h-11 pl-9"}
+        data-quick-add={shortcutTarget ? "" : undefined}
         onChange={(event) => setValue(event.target.value)}
         onKeyDown={onKeyDown}
       />

@@ -1,19 +1,19 @@
 import type { QueryClient } from "@tanstack/react-query";
+import { applyMove } from "@/features/boards/apply-move";
 import type { BoardDTO } from "@/features/boards/schemas";
+import { allItems, appendToLastPage, mapPages, type Pages } from "@/features/infinite";
 import { queryKeys } from "@/features/query-keys";
-import type { Page } from "@/lib/pagination";
 import type { StatusCategoryInput, TaskDetailDTO, TaskDTO } from "./schemas";
 
-// Optimistic edits of every cached place a task can appear in: task lists, task details
-// (and their `subtasks`), and board columns. Callers snapshot/restore (features/optimistic).
+// Optimistic edits of every cached place a task can appear in: task lists (infinite pages),
+// task details (and their `subtasks`), and board columns. features/optimistic undoes them.
 
-type TaskPage = Page<TaskDTO>;
 type Updater = (task: TaskDTO) => TaskDTO;
 
 function updateEverywhere(qc: QueryClient, update: Updater, drop?: (task: TaskDTO) => boolean) {
   const keep = (task: TaskDTO) => !drop?.(task);
-  qc.setQueriesData<TaskPage>({ queryKey: queryKeys.tasks.lists }, (page) =>
-    page ? { ...page, items: page.items.filter(keep).map(update) } : page,
+  qc.setQueriesData<Pages<TaskDTO>>({ queryKey: queryKeys.tasks.lists }, (data) =>
+    mapPages(data, (items) => items.filter(keep).map(update)),
   );
   qc.setQueriesData<TaskDetailDTO>({ queryKey: queryKeys.tasks.details }, (detail) =>
     detail
@@ -77,8 +77,8 @@ export function removeTaskFromCaches(
 
 /** The cached copy of a task, wherever it is (lists, details and their subtasks, boards). */
 export function findCachedTask(qc: QueryClient, id: string): TaskDTO | undefined {
-  for (const [, page] of qc.getQueriesData<TaskPage>({ queryKey: queryKeys.tasks.lists })) {
-    const found = page?.items.find((task) => task.id === id);
+  for (const [, data] of qc.getQueriesData<Pages<TaskDTO>>({ queryKey: queryKeys.tasks.lists })) {
+    const found = allItems(data).find((task) => task.id === id);
     if (found) return found;
   }
   for (const [, detail] of qc.getQueriesData<TaskDetailDTO>({
@@ -108,31 +108,40 @@ function adjustSubtaskCount<T extends TaskDTO>(task: T, total: number, done: num
 /** Where a new task lands, mirroring createTask on the server (BR-07, BR-27). */
 export type TaskTarget =
   | { kind: "inbox" }
-  | { kind: "project"; projectId: string; boardId: string | null }
+  | { kind: "project"; projectId: string; boardId: string | null; columnId?: string }
   | { kind: "subtask"; parentId: string };
 
+function insertInBoard(board: BoardDTO | undefined, task: TaskDTO, columnId?: string) {
+  const column =
+    board?.columns.find((c) => c.id === columnId) ??
+    board?.columns.find((c) => c.statusCategory === "TODO");
+  if (!board || !column) return board;
+  const landed = { ...task, columnId: column.id, statusCategory: column.statusCategory };
+  return {
+    ...board,
+    columns: board.columns.map((c) =>
+      c.id === column.id ? { ...c, tasks: [...c.tasks, landed] } : c,
+    ),
+  };
+}
+
 export function insertTaskInCaches(qc: QueryClient, task: TaskDTO, target: TaskTarget) {
-  if (target.kind === "inbox") {
-    qc.setQueryData<TaskPage>(queryKeys.tasks.list({ inbox: true }), (page) =>
-      page ? { ...page, items: [...page.items, task] } : page,
-    );
-  } else if (target.kind === "project" && target.boardId) {
-    qc.setQueryData<BoardDTO>(queryKeys.boards.detail(target.boardId), (board) => {
-      const first = board?.columns.find((column) => column.statusCategory === "TODO");
-      if (!board || !first) return board;
-      const landed = { ...task, columnId: first.id };
-      return {
-        ...board,
-        columns: board.columns.map((column) =>
-          column.id === first.id ? { ...column, tasks: [...column.tasks, landed] } : column,
-        ),
-      };
-    });
-  } else if (target.kind === "subtask") {
+  if (target.kind === "subtask") {
     qc.setQueryData<TaskDetailDTO>(queryKeys.tasks.detail(target.parentId), (parent) =>
       parent
         ? { ...adjustSubtaskCount(parent, 1, 0), subtasks: [...parent.subtasks, task] }
         : parent,
+    );
+    return;
+  }
+  const scope =
+    target.kind === "inbox" ? { inbox: true as const } : { projectId: target.projectId };
+  qc.setQueriesData<Pages<TaskDTO>>({ queryKey: queryKeys.tasks.scope(scope) }, (data) =>
+    appendToLastPage(data, task),
+  );
+  if (target.kind === "project" && target.boardId) {
+    qc.setQueryData<BoardDTO>(queryKeys.boards.detail(target.boardId), (board) =>
+      insertInBoard(board, task, target.columnId),
     );
   }
 }
@@ -142,25 +151,16 @@ export function replaceTaskInCaches(qc: QueryClient, tempId: string, task: TaskD
   updateEverywhere(qc, (other) => (other.id === tempId ? task : other));
 }
 
-/** Moves a task to the end of `columnId` on its board (TaskDialog column select). */
-export function moveTaskInBoard(
+/** Moves a card on its board (index counted without the card) and patches it elsewhere. */
+export function moveTaskInCaches(
   qc: QueryClient,
-  boardId: string,
-  taskId: string,
-  column: { id: string; statusCategory: StatusCategoryInput },
+  move: { id: string; boardId: string; target: { columnId: string; index: number } },
+  statusCategory: StatusCategoryInput,
 ) {
-  qc.setQueryData<BoardDTO>(queryKeys.boards.detail(boardId), (board) => {
-    const moving = board?.columns.flatMap((c) => c.tasks).find((task) => task.id === taskId);
-    if (!board || !moving) return board;
-    const moved = { ...moving, columnId: column.id, statusCategory: column.statusCategory };
-    return {
-      ...board,
-      columns: board.columns.map((c) => {
-        const tasks = c.tasks.filter((task) => task.id !== taskId);
-        return { ...c, tasks: c.id === column.id ? [...tasks, moved] : tasks };
-      }),
-    };
-  });
+  qc.setQueryData<BoardDTO>(queryKeys.boards.detail(move.boardId), (board) =>
+    board ? applyMove(board, { ...move, statusCategory }) : board,
+  );
+  patchTaskInCaches(qc, move.id, { columnId: move.target.columnId, statusCategory });
 }
 
 /** A placeholder TaskDTO for an optimistic create. */

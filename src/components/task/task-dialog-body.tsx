@@ -8,6 +8,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useProject } from "@/features/projects/hooks";
 import { useDeleteTask, useTask } from "@/features/tasks/hooks";
 import { isApiError } from "@/lib/api-client";
+import { ArchivedBanner } from "@/components/project/archived-banner";
 import { ActivityList } from "./activity-list";
 import { DueField } from "./due-field";
 import { LabelPicker } from "./label-picker";
@@ -76,41 +77,49 @@ export function TaskDialogBody({ taskId, onOpen, onReplace, onClose }: BodyProps
 
   const task = query.data;
   const boardId = project.data?.boardId ?? null;
+  // BR-22: tasks of an archived project are read-only. A disabled <fieldset> disables every
+  // field and button inside it natively, so the editors need no read-only mode of their own.
+  const readOnly = project.data?.status === "ARCHIVED";
   return (
     <div className="flex flex-col gap-4">
       {header}
-      <TaskTitleField key={`title-${revision}`} task={task} save={save} />
-      <div className="grid gap-6 md:grid-cols-[minmax(0,1fr)_16rem]">
-        <div className="flex min-w-0 flex-col gap-6">
-          <TaskDescription key={`description-${revision}`} task={task} save={save} />
-          {task.parentId === null && <SubtaskList task={task} onOpen={onOpen} />}
-          <ActivityList activity={task.activity} />
+      {readOnly && task.projectId && <ArchivedBanner projectId={task.projectId} />}
+      <fieldset disabled={readOnly} className="contents">
+        <TaskTitleField key={`title-${revision}`} task={task} save={save} />
+        <div className="grid gap-6 md:grid-cols-[minmax(0,1fr)_16rem]">
+          <div className="flex min-w-0 flex-col gap-6">
+            <TaskDescription key={`description-${revision}`} task={task} save={save} />
+            {task.parentId === null && <SubtaskList task={task} onOpen={onOpen} />}
+            <ActivityList activity={task.activity} />
+          </div>
+          <aside aria-label={t("TaskDialog.title")} className="flex flex-col gap-4">
+            <TaskStatusControl task={task} boardId={boardId} />
+            <PriorityField task={task} save={save} />
+            <DueField key={`due-${revision}`} task={task} save={save} />
+            <EstimateField
+              key={`estimate-${revision}`}
+              task={task}
+              save={save}
+              unit={project.data?.estimateUnit ?? null}
+            />
+            <LabelPicker task={task} save={save} />
+            {!readOnly && (
+              <Button
+                variant="outline"
+                className="h-11 text-red-700 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300"
+                onClick={() => {
+                  remove.mutate({ id: task.id, parentId: task.parentId });
+                  if (task.parentId) onReplace(task.parentId);
+                  else onClose();
+                }}
+              >
+                <Trash2 aria-hidden />
+                {t("TaskDialog.delete")}
+              </Button>
+            )}
+          </aside>
         </div>
-        <aside aria-label={t("TaskDialog.title")} className="flex flex-col gap-4">
-          <TaskStatusControl task={task} boardId={boardId} />
-          <PriorityField task={task} save={save} />
-          <DueField key={`due-${revision}`} task={task} save={save} />
-          <EstimateField
-            key={`estimate-${revision}`}
-            task={task}
-            save={save}
-            unit={project.data?.estimateUnit ?? null}
-          />
-          <LabelPicker task={task} save={save} />
-          <Button
-            variant="outline"
-            className="h-11 text-red-700 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300"
-            onClick={() => {
-              remove.mutate({ id: task.id, parentId: task.parentId });
-              if (task.parentId) onReplace(task.parentId);
-              else onClose();
-            }}
-          >
-            <Trash2 aria-hidden />
-            {t("TaskDialog.delete")}
-          </Button>
-        </aside>
-      </div>
+      </fieldset>
     </div>
   );
 }

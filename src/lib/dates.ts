@@ -111,3 +111,13 @@ export function utcToZonedParts(iso: string, tz: string): { date: string; time: 
     time: `${pad(zoned.getHours())}:${pad(zoned.getMinutes())}`,
   };
 }
+
+/**
+ * Last millisecond of wall-clock day `date` ("YYYY-MM-DD") in `tz`, as a UTC ISO instant —
+ * the inclusive upper bound of a "due until" filter (GET /tasks dueTo). Computed as the
+ * next local midnight minus 1 ms, so DST days of 23 or 25 hours are handled (NFR-32).
+ */
+export function endOfZonedDayIso(date: string, tz: string): string {
+  const nextDay = formatIsoDate(new Date(parseIsoDate(date).getTime() + 86_400_000));
+  return new Date(new Date(zonedToUtcIso(nextDay, null, tz)).getTime() - 1).toISOString();
+}

@@ -1,18 +1,33 @@
 import type { QueryKey } from "@tanstack/react-query";
 
-// Every TanStack Query key in one place (ADR-06). Prefixes (`all`) are used to cancel,
-// snapshot and invalidate whole groups after a mutation.
+// Every TanStack Query key in one place (ADR-06). Prefixes (`all`, `lists`) are used to
+// cancel, snapshot and invalidate whole groups after a mutation.
 
-/** c1 lists load one page; paging and virtualization arrive with ListView (MVP-1 c2). */
-export const LIST_LIMIT = 200;
+/** Page size of infinite lists (docs/05 section 1: default 50). */
+export const PAGE_SIZE = 50;
 
-export type TaskListFilter = { inbox: true } | { projectId: string };
+/** Which tasks a list shows. Keys match partially, so { inbox: true } finds every inbox list. */
+export type TaskScope = { inbox: true } | { projectId: string };
+
+/** List filters and sort as kept in the URL (dates are "YYYY-MM-DD" in User.timezone). */
+export type TaskListParams = {
+  status?: "TODO" | "IN_PROGRESS" | "DONE";
+  priority?: "URGENT" | "HIGH" | "MEDIUM" | "LOW";
+  labelId?: string;
+  from?: string;
+  to?: string;
+  overdue?: true;
+  q?: string;
+  sort?: "order" | "dueAt" | "-dueAt" | "priority" | "createdAt" | "-createdAt" | "title";
+};
 
 export const queryKeys = {
   tasks: {
     all: ["tasks"] as const,
     lists: ["tasks", "list"] as const,
-    list: (filter: TaskListFilter) => ["tasks", "list", filter] as const,
+    scope: (scope: TaskScope) => ["tasks", "list", scope] as const,
+    list: (scope: TaskScope, params: TaskListParams = {}) =>
+      ["tasks", "list", scope, params] as const,
     details: ["tasks", "detail"] as const,
     detail: (id: string) => ["tasks", "detail", id] as const,
   },
@@ -30,6 +45,9 @@ export const queryKeys = {
   labels: { all: ["labels"] as const },
   trash: { all: ["trash"] as const },
 } satisfies Record<string, Record<string, QueryKey | ((...args: never[]) => QueryKey)>>;
+
+/** Project and label lists stay single-page (few rows); they load this many. */
+export const LIST_LIMIT = 200;
 
 /** Optimistically created rows carry a temporary id until the server answers. */
 export const TEMP_ID_PREFIX = "temp-";

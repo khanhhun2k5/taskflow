@@ -86,6 +86,7 @@ export const listTasksQuerySchema = z.strictObject({
   sprintId: idSchema.optional(), // read-only filter until MVP-3
   backlog: queryBoolean.optional(),
   parentId: idSchema.optional(),
+  topLevel: queryBoolean.optional(), // true → only tasks without a parent (project ListView)
   sort: z.enum(TASK_SORTS).default("order"),
   ...pageQueryShape,
 });

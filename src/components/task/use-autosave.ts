@@ -1,7 +1,9 @@
 "use client";
 
+import { useMutationState } from "@tanstack/react-query";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useUpdateTask, type TaskUpdate } from "@/features/tasks/hooks";
+import { OPTIMISTIC_KEY } from "@/features/optimistic";
+import { TASK_UPDATE_KEY, useUpdateTask, type TaskUpdate } from "@/features/tasks/hooks";
 
 export const AUTOSAVE_DELAY_MS = 500; // docs/06 section 4.3
 
@@ -37,38 +39,63 @@ export function useDebouncedSave<T>(save: (value: T) => void, delay = AUTOSAVE_D
   return { schedule, flush };
 }
 
+type SaveRecord = {
+  status: "idle" | "pending" | "success" | "error";
+  fields: string[];
+  submittedAt: number;
+};
+
 /**
- * PATCH /tasks/:id with optimistic cache + the "Saved" indicator of TaskDialog. Overlapping
- * saves are counted, so the indicator only says "Saved" when every one of them succeeded.
- * `revision` changes after a failed save: fields keyed by it re-read the rolled-back task.
+ * Indicator state from the task's PATCH mutations since the dialog opened. Read from the
+ * mutation cache, so a "Retry" from the error toast (a new mutation) counts too. A failed
+ * save stays "error" until a later successful save covers the same fields.
+ */
+export function saveStateOf(records: SaveRecord[]): SaveState {
+  if (records.length === 0) return "idle";
+  if (records.some((record) => record.status === "pending")) return "saving";
+  const unsaved = records.some(
+    (failed, index) =>
+      failed.status === "error" &&
+      !records
+        .slice(index + 1)
+        .some(
+          (later) =>
+            later.status === "success" && failed.fields.every((f) => later.fields.includes(f)),
+        ),
+  );
+  return unsaved ? "error" : "saved";
+}
+
+/**
+ * PATCH /tasks/:id with optimistic cache + the "Saved" indicator of TaskDialog.
+ * `revision` changes after each failed save: fields keyed by it re-read the rolled-back
+ * task (the error status is set after the rollback/refetch has finished).
  */
 export function useTaskSaver(taskId: string) {
-  const { mutateAsync } = useUpdateTask();
-  const [state, setState] = useState<SaveState>("idle");
-  const [revision, setRevision] = useState(0);
-  const inFlight = useRef(0);
-  const failed = useRef(false);
+  const { mutate } = useUpdateTask();
+  const [openedAt] = useState(() => Date.now());
+  const records = useMutationState({
+    filters: {
+      mutationKey: [...OPTIMISTIC_KEY, ...TASK_UPDATE_KEY],
+      predicate: (mutation) =>
+        (mutation.state.variables as TaskUpdate | undefined)?.id === taskId &&
+        mutation.state.submittedAt >= openedAt,
+    },
+    select: (mutation): SaveRecord => ({
+      status: mutation.state.status,
+      fields: Object.keys((mutation.state.variables as TaskUpdate | undefined)?.input ?? {}),
+      submittedAt: mutation.state.submittedAt,
+    }),
+  });
+  const ordered = [...records].sort((a, b) => a.submittedAt - b.submittedAt);
+  const lastError = ordered.filter((record) => record.status === "error").at(-1);
 
   const save = useCallback(
-    (input: TaskUpdate["input"], optimistic: TaskUpdate["optimistic"]) => {
-      inFlight.current += 1;
-      setState("saving");
-      mutateAsync({ id: taskId, input, optimistic })
-        .catch(() => {
-          failed.current = true;
-        })
-        .finally(() => {
-          inFlight.current -= 1;
-          if (inFlight.current > 0) return;
-          // By now onSettled has rolled back or refetched the cache (it is awaited).
-          setState(failed.current ? "error" : "saved");
-          if (failed.current) setRevision((value) => value + 1);
-          failed.current = false;
-        });
-    },
-    [mutateAsync, taskId],
+    (input: TaskUpdate["input"], optimistic: TaskUpdate["optimistic"]) =>
+      mutate({ id: taskId, input, optimistic }),
+    [mutate, taskId],
   );
-  return { state, save, revision };
+  return { state: saveStateOf(ordered), save, revision: lastError?.submittedAt ?? 0 };
 }
 
 export type SaveTask = ReturnType<typeof useTaskSaver>["save"];

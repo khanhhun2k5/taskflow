@@ -4,14 +4,14 @@ import { useQuery } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import type { z } from "zod";
+import type { BoardMove } from "@/features/boards/apply-move";
 import { useOptimisticMutation } from "@/features/optimistic";
-import { isTempId, LIST_LIMIT, queryKeys, tempId } from "@/features/query-keys";
-import { apiFetch, toQuery } from "@/lib/api-client";
-import type { Page } from "@/lib/pagination";
+import { isTempId, queryKeys, tempId } from "@/features/query-keys";
+import { apiFetch } from "@/lib/api-client";
 import {
   draftTask,
   insertTaskInCaches,
-  moveTaskInBoard,
+  moveTaskInCaches,
   patchTaskInCaches,
   removeTaskFromCaches,
   replaceTaskInCaches,
@@ -23,36 +23,31 @@ import type {
   StatusCategoryInput,
   TaskDetailDTO,
   TaskDTO,
-  TrashItemDTO,
   UpdateTaskInput,
   WithWarnings,
 } from "./schemas";
 
-// TanStack Query hooks for tasks and the trash (docs/05 section 2.2). Components call the
-// API only through these hooks (docs/03 section 3).
+// TanStack Query hooks for single tasks (docs/05 section 2.2). Lists: list-hooks.ts; trash:
+// trash-hooks.ts. Components call the API only through these hooks (docs/03 section 3).
 
 type CreateTaskBody = z.input<typeof createTaskSchema>;
 
 const nowIso = () => new Date().toISOString();
 
 /** Shared by every task write: lists, details, boards; progress and trash are derived. */
-const TASK_CACHES = [queryKeys.tasks.all, queryKeys.boards.all] as const;
-const DERIVED = [queryKeys.projects.all, queryKeys.trash.all] as const;
+export const TASK_CACHES = [queryKeys.tasks.all, queryKeys.boards.all] as const;
+export const DERIVED = [queryKeys.projects.all, queryKeys.trash.all] as const;
+
+/** Mutation keys (after OPTIMISTIC_KEY) used to watch writes in flight. */
+export const TASK_UPDATE_KEY = ["task-update"] as const;
+export const MOVE_KEY = ["move"] as const;
 
 /** BR-29: warning-mode WIP limits still save but tell the user. */
-function useWipWarning() {
+export function useWipWarning() {
   const t = useTranslations("Warnings");
   return (result: { warnings: string[] }) => {
     if (result.warnings.includes("WIP_LIMIT_EXCEEDED")) toast.warning(t("WIP_LIMIT_EXCEEDED"));
   };
-}
-
-export function useInboxTasks() {
-  return useQuery({
-    queryKey: queryKeys.tasks.list({ inbox: true }),
-    queryFn: ({ signal }) =>
-      apiFetch<Page<TaskDTO>>(`/tasks${toQuery({ inbox: true, limit: LIST_LIMIT })}`, { signal }),
-  });
 }
 
 export function useTask(id: string | null) {
@@ -63,15 +58,18 @@ export function useTask(id: string | null) {
   });
 }
 
-/** Creates a task in the page's context (docs/06 section 4.1). */
+function createContext(target: TaskTarget): Partial<CreateTaskBody> {
+  if (target.kind === "subtask") return { parentId: target.parentId };
+  if (target.kind === "project") {
+    return target.columnId ? { columnId: target.columnId } : { projectId: target.projectId };
+  }
+  return {};
+}
+
+/** Creates a task in the page's context (docs/06 section 4.1); `columnId` targets a column. */
 export function useCreateTask(target: TaskTarget) {
   const warn = useWipWarning();
-  const context: Partial<CreateTaskBody> =
-    target.kind === "project"
-      ? { projectId: target.projectId }
-      : target.kind === "subtask"
-        ? { parentId: target.parentId }
-        : {};
+  const context = createContext(target);
   const fields: Partial<TaskDTO> =
     target.kind === "project"
       ? { projectId: target.projectId }
@@ -108,6 +106,9 @@ export type TaskUpdate = {
 
 export function useUpdateTask() {
   return useOptimisticMutation({
+    key: TASK_UPDATE_KEY,
+    // useTaskSaver reads these to show "Saved"; keep them while a dialog may be open.
+    gcTime: Infinity,
     mutationFn: ({ id, input }: TaskUpdate) =>
       apiFetch<WithWarnings<TaskDTO>>(`/tasks/${id}`, { method: "PATCH", body: input }),
     affects: TASK_CACHES,
@@ -127,27 +128,23 @@ export function useSetTaskStatus() {
   });
 }
 
-type MoveVars = {
-  id: string;
-  boardId: string;
-  column: { id: string; statusCategory: StatusCategoryInput };
-};
-
-/** Column select in TaskDialog: moves to the end of the column (docs/05 POST /move). */
+/**
+ * POST /tasks/:id/move (drop on the board, column select in TaskDialog). Moves in flight
+ * are watched by the board (MOVE_KEY) and re-applied over refetched data until they settle.
+ * WIP strict (409) rolls back with the localized toast; warning mode toasts a warning.
+ */
 export function useMoveTask() {
   const warn = useWipWarning();
   return useOptimisticMutation({
-    mutationFn: ({ id, column }: MoveVars) =>
+    key: MOVE_KEY,
+    mutationFn: ({ id, target, beforeId, afterId }: BoardMove) =>
       apiFetch<WithWarnings<TaskDTO>>(`/tasks/${id}/move`, {
         method: "POST",
-        body: { columnId: column.id, beforeId: null, afterId: null },
+        body: { columnId: target.columnId, beforeId, afterId },
       }),
     affects: TASK_CACHES,
     invalidate: DERIVED,
-    apply: (qc, { id, boardId, column }) => {
-      moveTaskInBoard(qc, boardId, id, column);
-      patchTaskInCaches(qc, id, { columnId: column.id, statusCategory: column.statusCategory });
-    },
+    apply: (qc, move) => moveTaskInCaches(qc, move, move.statusCategory),
     onSuccess: (_qc, result) => warn(result),
   });
 }
@@ -161,32 +158,5 @@ export function useDeleteTask() {
     invalidate: DERIVED,
     apply: (qc, task) => removeTaskFromCaches(qc, task),
     onSuccess: () => toast.success(t("deleted")),
-  });
-}
-
-export function useTrash() {
-  return useQuery({
-    queryKey: queryKeys.trash.all,
-    queryFn: ({ signal }) =>
-      apiFetch<Page<TrashItemDTO>>(`/trash${toQuery({ limit: LIST_LIMIT })}`, { signal }),
-  });
-}
-
-/** Restores a task or a project from the trash (BR-10, US-13). */
-export function useRestore() {
-  const t = useTranslations("Trash");
-  // Hook-level onSuccess: the trash row unmounts as soon as it is removed optimistically.
-  return useOptimisticMutation({
-    mutationFn: ({ type, id }: Pick<TrashItemDTO, "type" | "id" | "title">) =>
-      apiFetch<unknown>(`/${type === "task" ? "tasks" : "projects"}/${id}/restore`, {
-        method: "POST",
-      }),
-    affects: [queryKeys.trash.all],
-    invalidate: [...TASK_CACHES, queryKeys.projects.all],
-    apply: (qc, { id }) =>
-      qc.setQueryData<Page<TrashItemDTO>>(queryKeys.trash.all, (page) =>
-        page ? { ...page, items: page.items.filter((item) => item.id !== id) } : page,
-      ),
-    onSuccess: (_qc, _data, { title }) => toast.success(t("restored", { title })),
   });
 }

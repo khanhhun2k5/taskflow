@@ -92,7 +92,24 @@
       "todo": "Cần làm",
       "inProgress": "Đang làm",
       "done": "Xong"
-    }
+    },
+    "cardRole": "thẻ việc kéo được",
+    "count": "{count, plural, other {# việc}}",
+    "wipCount": "{count}/{limit}",
+    "overLimit": "vượt giới hạn WIP",
+    "strict": "chặn cứng",
+    "columnMenu": "Thao tác với cột {name}",
+    "rename": "Đổi tên",
+    "status": "Nhóm trạng thái",
+    "setWip": "Đặt giới hạn WIP",
+    "addLeft": "Thêm cột bên trái",
+    "addRight": "Thêm cột bên phải",
+    "moveLeft": "Dời sang trái",
+    "moveRight": "Dời sang phải",
+    "delete": "Xóa cột",
+    "empty": "Kéo việc vào đây",
+    "quickAdd": "Thêm việc vào cột {column}",
+    "quickAddPlaceholder": "Thêm việc…"
   },
   "Errors": {
     "VALIDATION_ERROR": "Dữ liệu chưa hợp lệ. Kiểm tra lại rồi thử lần nữa.",
@@ -267,5 +284,117 @@
     "task": "Việc",
     "project": "Dự án",
     "deletedAt": "Đã xóa {date}"
+  },
+  "Card": {
+    "title": "Việc: {title}",
+    "due": "hạn {date}",
+    "priority": "ưu tiên {priority}",
+    "overdue": "trễ hạn"
+  },
+  "Dnd": {
+    "instructions": "Nhấn Space để nhặt việc. Dùng các phím mũi tên để di chuyển, Space để thả, Esc để hủy. Enter để mở việc.",
+    "picked": "Đã nhặt {title}. Đang ở cột {column}, vị trí {position} trên {total}.",
+    "over": "{title} đang ở cột {column}, vị trí {position} trên {total}.",
+    "dropped": "Đã thả {title} vào cột {column}, vị trí {position} trên {total}.",
+    "cancelled": "Đã hủy kéo {title}. Việc vẫn ở cột {column}."
+  },
+  "ColumnForm": {
+    "addTitle": "Thêm cột",
+    "renameTitle": "Đổi tên cột",
+    "wipTitle": "Giới hạn WIP",
+    "name": "Tên cột",
+    "status": "Nhóm trạng thái",
+    "wipLimit": "Số việc tối đa",
+    "wipHint": "Để trống nghĩa là không giới hạn.",
+    "wipInvalid": "Nhập số nguyên từ 1 đến {max}, hoặc để trống.",
+    "strict": "Chặn cứng: không cho thả thêm khi cột đã đủ",
+    "cancel": "Hủy",
+    "save": "Lưu"
+  },
+  "DeleteColumn": {
+    "title": "Xóa cột {name}",
+    "hasTasks": "{count, plural, other {Cột còn # việc. Chọn cột để chuyển chúng sang.}}",
+    "empty": "Cột không còn việc nào.",
+    "moveTo": "Chuyển việc sang cột",
+    "cancel": "Hủy",
+    "confirm": "Xóa cột"
+  },
+  "View": {
+    "label": "Kiểu xem",
+    "kanban": "Kanban",
+    "list": "Danh sách"
+  },
+  "List": {
+    "title": "Tiêu đề",
+    "status": "Trạng thái",
+    "priority": "Ưu tiên",
+    "due": "Hạn",
+    "estimate": "Ước lượng",
+    "labels": "Nhãn",
+    "selectAll": "Chọn tất cả việc đã tải",
+    "selectRow": "Chọn {title}",
+    "empty": "Chưa có việc nào",
+    "emptyHint": "Thêm việc bằng ô phía trên.",
+    "emptyFiltered": "Không có việc khớp bộ lọc",
+    "emptyFilteredHint": "Thử bỏ bớt điều kiện lọc.",
+    "loaded": "{count, plural, other {Đã tải # việc}}",
+    "loadMore": "Tải thêm",
+    "loadingMore": "Đang tải thêm…"
+  },
+  "Filters": {
+    "label": "Lọc việc",
+    "search": "Tìm theo tiêu đề",
+    "status": "Trạng thái",
+    "priority": "Ưu tiên",
+    "labelFilter": "Nhãn",
+    "any": "Tất cả",
+    "from": "Hạn từ ngày",
+    "to": "Đến ngày",
+    "overdue": "Chỉ việc trễ hạn",
+    "sort": "Sắp xếp",
+    "sorts": {
+      "order": "Thứ tự",
+      "dueAt": "Hạn gần nhất trước",
+      "-dueAt": "Hạn xa nhất trước",
+      "priority": "Ưu tiên cao trước",
+      "createdAt": "Cũ nhất trước",
+      "-createdAt": "Mới nhất trước",
+      "title": "Tiêu đề A–Z"
+    },
+    "clear": "Xóa bộ lọc"
+  },
+  "Bulk": {
+    "label": "Thao tác hàng loạt",
+    "selected": "{count, plural, other {Đã chọn # việc}}",
+    "max": "Tối đa {max} việc mỗi lần.",
+    "move": "Chuyển sang cột",
+    "status": "Đổi trạng thái",
+    "priority": "Đổi ưu tiên",
+    "labels": "Nhãn",
+    "addLabel": "Thêm nhãn",
+    "removeLabel": "Bỏ nhãn",
+    "due": "Đặt hạn",
+    "clearDue": "Bỏ hạn",
+    "delete": "Xóa",
+    "clear": "Bỏ chọn",
+    "done": "{count, plural, other {Đã cập nhật # việc.}}"
+  },
+  "Shortcuts": {
+    "title": "Phím tắt",
+    "hint": "Phím tắt không hoạt động khi bạn đang gõ trong ô nhập.",
+    "then": "rồi",
+    "quickAdd": "Tới ô thêm việc nhanh",
+    "goInbox": "Tới Hộp thư",
+    "goToday": "Tới Hôm nay",
+    "viewKanban": "Xem dạng Kanban",
+    "viewList": "Xem dạng Danh sách",
+    "open": "Mở việc đang chọn",
+    "select": "Chọn/bỏ chọn việc (Danh sách)",
+    "markDone": "Đánh dấu xong việc đang chọn",
+    "help": "Hiện bảng phím tắt"
+  },
+  "Archived": {
+    "notice": "Dự án đã lưu trữ. Mọi thứ chỉ xem được.",
+    "unarchive": "Bỏ lưu trữ"
   }
 }

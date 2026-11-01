@@ -7,8 +7,9 @@ import { ErrorState } from "@/components/common/error-state";
 import { ListRowsSkeleton } from "@/components/common/list-skeleton";
 import { PageHeader } from "@/components/common/page-header";
 import { Button } from "@/components/ui/button";
-import { LIST_LIMIT } from "@/features/query-keys";
-import { useRestore, useTrash } from "@/features/tasks/hooks";
+import { LoadMore } from "@/components/common/load-more";
+import { allItems } from "@/features/infinite";
+import { useRestore, useTrash } from "@/features/tasks/trash-hooks";
 import type { TrashItemDTO } from "@/features/tasks/schemas";
 
 /**
@@ -17,8 +18,8 @@ import type { TrashItemDTO } from "@/features/tasks/schemas";
  */
 export function TrashView() {
   const t = useTranslations("Trash");
-  const tc = useTranslations("Common");
   const trash = useTrash();
+  const items = allItems(trash.data);
 
   return (
     <div className="flex flex-1 flex-col gap-6 p-4 md:p-6">
@@ -27,20 +28,20 @@ export function TrashView() {
         <ListRowsSkeleton />
       ) : trash.isError ? (
         <ErrorState error={trash.error} onRetry={() => void trash.refetch()} />
-      ) : trash.data.items.length === 0 ? (
+      ) : items.length === 0 ? (
         <EmptyState icon={Trash2} title={t("emptyTitle")} description={t("emptyDescription")} />
       ) : (
         <>
           <ul className="flex flex-col gap-2" aria-label={t("title")}>
-            {trash.data.items.map((item) => (
+            {items.map((item) => (
               <TrashRow key={`${item.type}-${item.id}`} item={item} />
             ))}
           </ul>
-          {trash.data.nextCursor && (
-            <p className="text-sm text-muted-foreground">
-              {tc("truncated", { count: LIST_LIMIT })}
-            </p>
-          )}
+          <LoadMore
+            hasMore={trash.hasNextPage}
+            loading={trash.isFetchingNextPage}
+            onLoad={() => void trash.fetchNextPage()}
+          />
         </>
       )}
     </div>

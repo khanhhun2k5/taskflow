@@ -6,6 +6,7 @@ import { AppHeader } from "@/components/layout/app-header";
 import { BottomNav } from "@/components/layout/bottom-nav";
 import { Sidebar } from "@/components/layout/sidebar";
 import { LocalizedToaster } from "@/components/providers/localized-toaster";
+import { ShortcutsProvider } from "@/components/shortcuts/shortcuts-provider";
 import { listProjectsQuerySchema } from "@/features/projects/schemas";
 import { LIST_LIMIT, queryKeys } from "@/features/query-keys";
 import { listProjects } from "@/server/services/projects";
@@ -26,15 +27,17 @@ export async function SessionGate({ children }: { children: ReactNode }) {
 
   return (
     <IntlBoundary className="flex min-h-full flex-1">
-      <HydrationBoundary state={state}>
-        <Sidebar />
-      </HydrationBoundary>
-      <div className="flex min-w-0 flex-1 flex-col">
-        <AppHeader user={{ name: session.user.name, email: session.user.email }} />
-        <main className="flex flex-1 flex-col pb-20 md:pb-0">{children}</main>
-      </div>
-      <BottomNav />
-      <LocalizedToaster />
+      <ShortcutsProvider>
+        <HydrationBoundary state={state}>
+          <Sidebar />
+        </HydrationBoundary>
+        <div className="flex min-w-0 flex-1 flex-col">
+          <AppHeader user={{ name: session.user.name, email: session.user.email }} />
+          <main className="flex flex-1 flex-col pb-20 md:pb-0">{children}</main>
+        </div>
+        <BottomNav />
+        <LocalizedToaster />
+      </ShortcutsProvider>
     </IntlBoundary>
   );
 }

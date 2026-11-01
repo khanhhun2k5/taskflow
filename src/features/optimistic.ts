@@ -14,6 +14,10 @@ type Snapshot = [QueryKey, unknown][];
 export const OPTIMISTIC_KEY = ["optimistic"] as const;
 
 type OptimisticOptions<TVars, TData> = {
+  /** Appended to OPTIMISTIC_KEY so callers can find these mutations (useMutationState). */
+  key?: readonly string[];
+  /** How long settled mutations stay in the cache (default 5 min); see useTaskSaver. */
+  gcTime?: number;
   mutationFn: (vars: TVars) => Promise<TData>;
   /** Query prefixes this mutation touches: cancelled, snapshotted and invalidated. */
   affects: readonly QueryKey[];
@@ -58,8 +62,9 @@ export function useOptimisticMutation<TVars, TData>(options: OptimisticOptions<T
   const { affects, invalidate = [] } = options;
 
   const mutation = useMutation<TData, unknown, TVars, { snapshot: Snapshot }>({
-    mutationKey: OPTIMISTIC_KEY,
+    mutationKey: [...OPTIMISTIC_KEY, ...(options.key ?? [])],
     mutationFn: options.mutationFn,
+    gcTime: options.gcTime,
     onMutate: async (vars) => {
       await Promise.all(affects.map((queryKey) => qc.cancelQueries({ queryKey })));
       const snapshot = affects.flatMap((queryKey) => qc.getQueriesData({ queryKey }));

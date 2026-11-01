@@ -92,7 +92,24 @@
       "todo": "To do",
       "inProgress": "In progress",
       "done": "Done"
-    }
+    },
+    "cardRole": "draggable task card",
+    "count": "{count, plural, one {# task} other {# tasks}}",
+    "wipCount": "{count}/{limit}",
+    "overLimit": "over the WIP limit",
+    "strict": "hard limit",
+    "columnMenu": "Actions for column {name}",
+    "rename": "Rename",
+    "status": "Status group",
+    "setWip": "Set WIP limit",
+    "addLeft": "Add column to the left",
+    "addRight": "Add column to the right",
+    "moveLeft": "Move left",
+    "moveRight": "Move right",
+    "delete": "Delete column",
+    "empty": "Drop tasks here",
+    "quickAdd": "Add a task to column {column}",
+    "quickAddPlaceholder": "Add a task…"
   },
   "Errors": {
     "VALIDATION_ERROR": "Some data is not valid. Check it and try again.",
@@ -267,5 +284,117 @@
     "task": "Task",
     "project": "Project",
     "deletedAt": "Deleted {date}"
+  },
+  "Card": {
+    "title": "Task: {title}",
+    "due": "due {date}",
+    "priority": "{priority} priority",
+    "overdue": "overdue"
+  },
+  "Dnd": {
+    "instructions": "Press Space to pick up a task. Use the arrow keys to move it, Space to drop, Esc to cancel. Enter opens the task.",
+    "picked": "Picked up {title}. In column {column}, position {position} of {total}.",
+    "over": "{title} is in column {column}, position {position} of {total}.",
+    "dropped": "Dropped {title} in column {column}, position {position} of {total}.",
+    "cancelled": "Cancelled moving {title}. It stays in column {column}."
+  },
+  "ColumnForm": {
+    "addTitle": "Add column",
+    "renameTitle": "Rename column",
+    "wipTitle": "WIP limit",
+    "name": "Column name",
+    "status": "Status group",
+    "wipLimit": "Maximum tasks",
+    "wipHint": "Leave empty for no limit.",
+    "wipInvalid": "Enter a whole number from 1 to {max}, or leave it empty.",
+    "strict": "Hard limit: block drops when the column is full",
+    "cancel": "Cancel",
+    "save": "Save"
+  },
+  "DeleteColumn": {
+    "title": "Delete column {name}",
+    "hasTasks": "{count, plural, one {The column still has # task. Choose where to move it.} other {The column still has # tasks. Choose where to move them.}}",
+    "empty": "The column has no tasks.",
+    "moveTo": "Move tasks to column",
+    "cancel": "Cancel",
+    "confirm": "Delete column"
+  },
+  "View": {
+    "label": "View",
+    "kanban": "Kanban",
+    "list": "List"
+  },
+  "List": {
+    "title": "Title",
+    "status": "Status",
+    "priority": "Priority",
+    "due": "Due",
+    "estimate": "Estimate",
+    "labels": "Labels",
+    "selectAll": "Select all loaded tasks",
+    "selectRow": "Select {title}",
+    "empty": "No tasks yet",
+    "emptyHint": "Add tasks with the box above.",
+    "emptyFiltered": "No tasks match the filters",
+    "emptyFilteredHint": "Try removing some filters.",
+    "loaded": "{count, plural, one {# task loaded} other {# tasks loaded}}",
+    "loadMore": "Load more",
+    "loadingMore": "Loading more…"
+  },
+  "Filters": {
+    "label": "Filter tasks",
+    "search": "Search titles",
+    "status": "Status",
+    "priority": "Priority",
+    "labelFilter": "Label",
+    "any": "All",
+    "from": "Due from",
+    "to": "Due until",
+    "overdue": "Overdue only",
+    "sort": "Sort",
+    "sorts": {
+      "order": "Order",
+      "dueAt": "Due soonest first",
+      "-dueAt": "Due latest first",
+      "priority": "Highest priority first",
+      "createdAt": "Oldest first",
+      "-createdAt": "Newest first",
+      "title": "Title A–Z"
+    },
+    "clear": "Clear filters"
+  },
+  "Bulk": {
+    "label": "Bulk actions",
+    "selected": "{count, plural, one {# task selected} other {# tasks selected}}",
+    "max": "At most {max} tasks at a time.",
+    "move": "Move to column",
+    "status": "Set status",
+    "priority": "Set priority",
+    "labels": "Labels",
+    "addLabel": "Add label",
+    "removeLabel": "Remove label",
+    "due": "Set due date",
+    "clearDue": "Clear due date",
+    "delete": "Delete",
+    "clear": "Clear selection",
+    "done": "{count, plural, one {Updated # task.} other {Updated # tasks.}}"
+  },
+  "Shortcuts": {
+    "title": "Keyboard shortcuts",
+    "hint": "Shortcuts are off while you type in a field.",
+    "then": "then",
+    "quickAdd": "Go to the quick add box",
+    "goInbox": "Go to Inbox",
+    "goToday": "Go to Today",
+    "viewKanban": "Kanban view",
+    "viewList": "List view",
+    "open": "Open the focused task",
+    "select": "Select/unselect the task (List)",
+    "markDone": "Mark the focused task done",
+    "help": "Show this list"
+  },
+  "Archived": {
+    "notice": "This project is archived. Everything is read-only.",
+    "unarchive": "Unarchive"
   }
 }
