@@ -7,6 +7,8 @@ type RouteParams = Record<string, string | string[] | undefined>;
 export type UserContext<P extends RouteParams> = {
   userId: string;
   params: P;
+  /** Taken once per request; services use it for timestamps and isOverdue (NFR-34). */
+  now: Date;
 };
 
 type Handler<P extends RouteParams> = (
@@ -56,6 +58,7 @@ function toErrorResponse(error: unknown): Response {
 export function withUser<P extends RouteParams = Record<string, never>>(handler: Handler<P>) {
   return async (req: Request, routeCtx?: NextRouteContext<P>): Promise<Response> => {
     const startedAt = performance.now();
+    const now = new Date();
     const path = new URL(req.url).pathname;
     let userId: string | null = null;
     let response: Response;
@@ -68,7 +71,7 @@ export function withUser<P extends RouteParams = Record<string, never>>(handler:
       } else {
         userId = session.user.id;
         const params = routeCtx ? await routeCtx.params : ({} as P);
-        const result = await handler(req, { userId, params });
+        const result = await handler(req, { userId, params, now });
         response = result instanceof Response ? result : Response.json(result);
       }
     } catch (error) {
@@ -88,4 +91,14 @@ export function withUser<P extends RouteParams = Record<string, never>>(handler:
     });
     return response;
   };
+}
+
+/** 201 Created with a JSON body. */
+export function created(body: object): Response {
+  return Response.json(body, { status: 201 });
+}
+
+/** 204 No Content (successful DELETE). */
+export function noContent(): Response {
+  return new Response(null, { status: 204 });
 }
