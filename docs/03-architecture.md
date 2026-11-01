@@ -111,6 +111,28 @@ Mỗi quyết định ghi: bối cảnh, lựa chọn, lý do, hệ quả.
 - **Lý do**: cookie có thể hết hạn hoặc bị giả; chỉ kiểm tra ở rìa thì không an toàn, chỉ kiểm tra ở layout thì chậm chuyển hướng. Hai lớp cho cả trải nghiệm nhanh lẫn an toàn.
 - **Hệ quả**: không bao giờ dựa vào file chặn ở rìa để phân quyền dữ liệu; mọi Route Handler vẫn phải đi qua `withUser` (NFR-10).
 
+### ADR-12. Giữ `cacheComponents` và `partialPrefetching` của Next.js 16
+
+- **Bối cảnh**: khi khởi tạo dự án (P0), `create-next-app@16.4.3` bật sẵn `cacheComponents: true` và `partialPrefetching: true` trong `next.config.ts`. Hai cờ này đổi cách render: phần không phụ thuộc request được prerender thành khung tĩnh, phần đọc dữ liệu lúc request được stream sau. Các ADR trước được viết khi chưa tính đến chế độ này.
+- **Lựa chọn**: giữ cả hai cờ như mặc định của công cụ khởi tạo.
+- **Lý do**:
+  - Đây là mặc định chính thức của Next.js 16.4; tắt đi nghĩa là đi ngược hướng phát triển của framework, và tài liệu mới viết cho chế độ này.
+  - Khung trang (thanh bên, điều hướng dưới, tiêu đề) hiện ngay từ bản prerender, phần dữ liệu của người dùng stream vào sau — điều hướng nhanh hơn.
+  - `partialPrefetching` cho `<Link>` tải trước khung chung của route một lần thay vì từng liên kết; chỉ hoạt động khi `cacheComponents` bật.
+  - Dữ liệu nghiệp vụ vẫn đọc/ghi qua TanStack Query và `/api/v1/*` (ADR-06), nên phần lớn logic không phụ thuộc vào cơ chế cache phía server.
+- **Hệ quả**:
+  - **Mọi chỗ đọc `cookies()` hoặc `headers()` trong Server Component hoặc layout phải nằm trong `<Suspense>` có fallback dạng khung xương (skeleton)**, kể cả kiểm tra phiên đầy đủ ở layout nhóm `(app)` theo ADR-11. Cụ thể: layout `(app)` render khung tĩnh (thanh bên, điều hướng) ngay; thành phần kiểm tra phiên và nội dung trang nằm trong `<Suspense>`; phiên không hợp lệ thì chuyển hướng về `/login` từ bên trong ranh giới đó. Thiếu `<Suspense>` thì dev overlay của Next.js báo "blocking route" và trang bị chặn render tới khi đọc xong.
+  - Áp dụng tương tự cho Server Component lấy dữ liệu lần đầu để đổ vào `HydrationBoundary` (ADR-06) vì chúng cần `userId` từ phiên.
+  - Fallback khung xương phải giữ đúng kích thước bố cục để tránh nhảy giao diện (file 06).
+  - Không dùng `"use cache"` hay `"use cache: remote"` cho dữ liệu theo người dùng mà không truyền `userId` làm tham số; dữ liệu đọc thẳng từ cookie chỉ được cache bằng `"use cache: private"`. Hiện tại chưa dùng các chỉ thị cache; thêm vào thì phải ghi ADR.
+  - Route Handler `/api/v1/*` và file chặn route ở rìa (ADR-11) không bị ảnh hưởng.
+  - Nếu một route chưa kịp tách `<Suspense>`, tạm đặt `export const instant = false` trên page/layout đó và ghi TODO; không tắt `cacheComponents` toàn cục khi chưa có ADR mới.
+- **Nguồn** (tài liệu đi kèm `next@16.4.3`, `node_modules/next/dist/docs/`, tra ngày 2026-11-01):
+  - `01-app/03-api-reference/05-config/01-next-config-js/cacheComponents.md` — https://nextjs.org/docs/app/api-reference/config/next-config-js/cacheComponents
+  - `01-app/01-getting-started/08-caching.md` (mục "Streaming uncached data", runtime API `cookies`/`headers` cần `<Suspense>`) — https://nextjs.org/docs/app/getting-started/caching
+  - `01-app/02-guides/authentication-with-cache-components.md` (đọc phiên lúc request luôn nằm sau `<Suspense>`; `instant = false` khi chuyển đổi dần) — https://nextjs.org/docs/app/guides/authentication-with-cache-components
+  - `01-app/02-guides/adopting-partial-prefetching.md` — https://nextjs.org/docs/app/guides/adopting-partial-prefetching
+
 ## 3. Sơ đồ tầng
 
 ```
