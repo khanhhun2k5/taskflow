@@ -20,12 +20,12 @@ export type NavItem = {
 
 export const primaryNav: NavItem[] = [
   { key: "today", icon: Sun, href: "/today" },
-  { key: "inbox", icon: Inbox },
+  { key: "inbox", icon: Inbox, href: "/inbox" },
   { key: "calendar", icon: CalendarDays },
 ];
 
 export const secondaryNav: NavItem[] = [
-  { key: "trash", icon: Trash2 },
+  { key: "trash", icon: Trash2, href: "/trash" },
   { key: "settings", icon: Settings },
 ];
 
@@ -33,7 +33,7 @@ export const secondaryNav: NavItem[] = [
 export const bottomNav: NavItem[] = [
   { key: "today", icon: Sun, href: "/today" },
   { key: "calendar", icon: CalendarDays },
-  { key: "projectsAndCourses", icon: FolderKanban },
+  { key: "projectsAndCourses", icon: FolderKanban, href: "/projects" },
 ];
 
 export function isActive(pathname: string, href: string): boolean {

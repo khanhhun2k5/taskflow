@@ -6,6 +6,7 @@ import { Separator } from "@/components/ui/separator";
 import { NavEntry } from "./nav-entry";
 import { primaryNav, secondaryNav } from "./nav-items";
 import { NavSection } from "./nav-section";
+import { ProjectNavList } from "./project-nav-list";
 
 /**
  * docs/06 section 2: hidden on phones, icon rail on tablets (768–1023px),
@@ -38,12 +39,7 @@ export function Sidebar() {
           emptyText={t("Nav.coursesEmpty")}
           addLabel={t("Nav.addCourse")}
         />
-        <NavSection
-          id="nav-projects"
-          title={t("Nav.projects")}
-          emptyText={t("Nav.projectsEmpty")}
-          addLabel={t("Nav.addProject")}
-        />
+        <ProjectNavList />
         <ul className="mt-auto flex flex-col gap-1">
           {secondaryNav.map((item) => (
             <li key={item.key}>

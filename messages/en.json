@@ -3,7 +3,16 @@
     "appName": "TaskFlow",
     "tagline": "Personal task management",
     "comingSoon": "Coming soon",
-    "loading": "Loading…"
+    "loading": "Loading…",
+    "retry": "Retry",
+    "close": "Close",
+    "cancel": "Cancel",
+    "saving": "Saving…",
+    "saved": "Saved",
+    "saveFailed": "Not saved",
+    "truncated": "Showing the first {count} items only.",
+    "notifications": "Notifications",
+    "closeNotification": "Close notification"
   },
   "Home": {
     "openApp": "Open the app"
@@ -22,7 +31,9 @@
     "trash": "Trash",
     "settings": "Settings",
     "projectsAndCourses": "Projects & Courses",
-    "add": "Add"
+    "add": "Add",
+    "projectsAll": "All projects",
+    "projectsLoadError": "Couldn't load projects."
   },
   "Header": {
     "accountMenu": "Account",
@@ -82,5 +93,179 @@
       "inProgress": "In progress",
       "done": "Done"
     }
+  },
+  "Errors": {
+    "VALIDATION_ERROR": "Some data is not valid. Check it and try again.",
+    "UNAUTHENTICATED": "Your session has expired. Please sign in again.",
+    "NOT_FOUND": "This item was not found. It may have been deleted.",
+    "WIP_LIMIT_EXCEEDED": "This column has reached its WIP limit.",
+    "SPRINT_ALREADY_ACTIVE": "This project already has an active sprint.",
+    "SPRINT_NOT_ACTIVE": "This sprint is not active.",
+    "LABEL_EXISTS": "A label with this name already exists.",
+    "CONFLICT": "The data changed somewhere else at the same time. Please retry.",
+    "ESTIMATE_REQUIRED": "Add an estimate before adding this task to a sprint.",
+    "BOARD_NEEDS_TODO_AND_DONE": "A board needs at least one To do column and one Done column.",
+    "SUBTASK_DEPTH_EXCEEDED": "Subtasks cannot have subtasks.",
+    "INVALID_RECURRENCE_RULE": "The repeat rule is not valid.",
+    "PROJECT_ARCHIVED": "This project is archived. Unarchive it to make changes.",
+    "TASK_ON_BOARD": "This task is on a board; change its column to change its status.",
+    "PARENT_DELETED": "Couldn't restore: its parent task or project is still in the trash. Restore that first.",
+    "RATE_LIMITED": "You're going too fast. Please wait a moment.",
+    "INTERNAL_ERROR": "The server had a problem. Please retry.",
+    "NETWORK_ERROR": "Couldn't reach the server. Check your connection and retry.",
+    "generic": "Something went wrong. Please retry."
+  },
+  "Warnings": {
+    "WIP_LIMIT_EXCEEDED": "The column is over its WIP limit; the task was still saved."
+  },
+  "States": {
+    "loadError": "Couldn't load the data."
+  },
+  "QuickAdd": {
+    "label": "Add a new task",
+    "placeholder": "Add a task… (Enter to save)",
+    "subtaskLabel": "Add a subtask",
+    "subtaskPlaceholder": "Add a subtask… (Enter to save)"
+  },
+  "Priority": {
+    "label": "Priority",
+    "URGENT": "Urgent",
+    "HIGH": "High",
+    "MEDIUM": "Medium",
+    "LOW": "Low"
+  },
+  "Status": {
+    "TODO": "To do",
+    "IN_PROGRESS": "In progress",
+    "DONE": "Done"
+  },
+  "EstimateUnit": {
+    "POINTS": "points",
+    "HOURS": "hours"
+  },
+  "Task": {
+    "open": "Open task: {title}",
+    "markDone": "Mark done: {title}",
+    "overdue": "Overdue",
+    "due": "Due {date}",
+    "subtasks": "{done}/{total} subtasks",
+    "saving": "Saving new task"
+  },
+  "TaskDialog": {
+    "title": "Task details",
+    "titleLabel": "Title",
+    "description": "Description",
+    "descriptionPlaceholder": "Description (Markdown supported)…",
+    "descriptionEmpty": "No description yet. Click to add one.",
+    "editDescription": "Edit description",
+    "doneEditing": "Done",
+    "subtasks": "Subtasks",
+    "subtasksEmpty": "No subtasks yet.",
+    "activity": "Activity",
+    "activityEmpty": "No activity yet.",
+    "status": "Status",
+    "column": "Column",
+    "done": "Done",
+    "due": "Due",
+    "allDay": "All day",
+    "time": "Time",
+    "pickDate": "Pick a date",
+    "noDue": "No due date",
+    "clearDue": "Clear due date",
+    "estimate": "Estimate",
+    "delete": "Delete task",
+    "deleted": "Task moved to the trash.",
+    "notFound": "This task was not found. It may have been deleted."
+  },
+  "Labels": {
+    "label": "Labels",
+    "choose": "Choose labels",
+    "none": "No labels yet",
+    "newName": "New label name",
+    "create": "Create label “{name}”",
+    "exists": "Label “{name}” already exists; it is now selected."
+  },
+  "Activity": {
+    "TASK_CREATED": "Task created",
+    "STATUS_CHANGED": "Status changed",
+    "ESTIMATE_CHANGED": "Estimate changed",
+    "DUE_CHANGED": "Due date changed",
+    "ADDED_TO_SPRINT": "Added to sprint",
+    "REMOVED_FROM_SPRINT": "Removed from sprint",
+    "DELETED": "Deleted",
+    "RESTORED": "Restored"
+  },
+  "Inbox": {
+    "title": "Inbox",
+    "description": "Tasks that are not in a project.",
+    "emptyTitle": "Your inbox is empty",
+    "emptyDescription": "Type in the box above and press Enter to add a task."
+  },
+  "Projects": {
+    "title": "Projects",
+    "filterLabel": "Filter projects",
+    "ACTIVE": "Active",
+    "ARCHIVED": "Archived",
+    "new": "New project",
+    "emptyActiveTitle": "No projects yet",
+    "emptyActiveDescription": "Create a project to group tasks and track progress.",
+    "emptyArchivedTitle": "No archived projects",
+    "emptyArchivedDescription": "Projects you archive will appear here.",
+    "overdue": "{count, plural, one {# overdue task} other {# overdue tasks}}",
+    "archive": "Archive",
+    "unarchive": "Unarchive",
+    "actions": "Actions for project {name}",
+    "KANBAN": "Kanban",
+    "SCRUM": "Scrum"
+  },
+  "CreateProject": {
+    "title": "Create project",
+    "name": "Project name",
+    "nameError": "Enter a project name (up to 120 characters).",
+    "color": "Color",
+    "workflow": "Workflow",
+    "estimateUnit": "Estimate unit",
+    "submit": "Create project"
+  },
+  "Colors": {
+    "indigo": "Indigo",
+    "blue": "Blue",
+    "cyan": "Cyan",
+    "teal": "Teal",
+    "green": "Green",
+    "amber": "Amber",
+    "orange": "Orange",
+    "red": "Red",
+    "pink": "Pink",
+    "fuchsia": "Fuchsia",
+    "violet": "Violet",
+    "slate": "Slate"
+  },
+  "Project": {
+    "columnTasks": "{count, plural, one {# task} other {# tasks}}",
+    "columnEmpty": "No tasks",
+    "archivedNotice": "This project is archived and read-only.",
+    "notFound": "Project not found.",
+    "wip": "WIP {count}/{limit}"
+  },
+  "Progress": {
+    "label": "Progress",
+    "weighted": "By estimate",
+    "count": "By task count",
+    "summary": "{done}/{total} tasks done",
+    "estimateHint": "Add estimates to see more accurate progress",
+    "overdueTitle": "Overdue"
+  },
+  "Trash": {
+    "title": "Trash",
+    "description": "Deleted items are kept until you restore them.",
+    "emptyTitle": "The trash is empty",
+    "emptyDescription": "Tasks and projects you delete will appear here.",
+    "restore": "Restore",
+    "restoreItem": "Restore {title}",
+    "restored": "Restored “{title}”.",
+    "task": "Task",
+    "project": "Project",
+    "deletedAt": "Deleted {date}"
   }
 }

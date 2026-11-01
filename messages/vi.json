@@ -3,7 +3,16 @@
     "appName": "TaskFlow",
     "tagline": "Quản lý công việc cá nhân",
     "comingSoon": "Sắp có",
-    "loading": "Đang tải…"
+    "loading": "Đang tải…",
+    "retry": "Thử lại",
+    "close": "Đóng",
+    "cancel": "Hủy",
+    "saving": "Đang lưu…",
+    "saved": "Đã lưu",
+    "saveFailed": "Chưa lưu được",
+    "truncated": "Chỉ hiện {count} mục đầu tiên.",
+    "notifications": "Thông báo",
+    "closeNotification": "Đóng thông báo"
   },
   "Home": {
     "openApp": "Vào ứng dụng"
@@ -22,7 +31,9 @@
     "trash": "Thùng rác",
     "settings": "Cài đặt",
     "projectsAndCourses": "Dự án & Môn",
-    "add": "Thêm"
+    "add": "Thêm",
+    "projectsAll": "Tất cả dự án",
+    "projectsLoadError": "Không tải được dự án."
   },
   "Header": {
     "accountMenu": "Tài khoản",
@@ -82,5 +93,179 @@
       "inProgress": "Đang làm",
       "done": "Xong"
     }
+  },
+  "Errors": {
+    "VALIDATION_ERROR": "Dữ liệu chưa hợp lệ. Kiểm tra lại rồi thử lần nữa.",
+    "UNAUTHENTICATED": "Phiên đăng nhập đã hết. Vui lòng đăng nhập lại.",
+    "NOT_FOUND": "Không tìm thấy mục này. Có thể nó đã bị xóa.",
+    "WIP_LIMIT_EXCEEDED": "Cột đã đạt giới hạn số việc (WIP).",
+    "SPRINT_ALREADY_ACTIVE": "Dự án đã có sprint đang chạy.",
+    "SPRINT_NOT_ACTIVE": "Sprint này không đang chạy.",
+    "LABEL_EXISTS": "Đã có nhãn trùng tên.",
+    "CONFLICT": "Dữ liệu vừa thay đổi cùng lúc ở nơi khác. Vui lòng thử lại.",
+    "ESTIMATE_REQUIRED": "Việc cần có ước lượng trước khi thêm vào sprint.",
+    "BOARD_NEEDS_TODO_AND_DONE": "Bảng cần ít nhất một cột Cần làm và một cột Xong.",
+    "SUBTASK_DEPTH_EXCEEDED": "Việc con không thể có việc con.",
+    "INVALID_RECURRENCE_RULE": "Quy tắc lặp lại không hợp lệ.",
+    "PROJECT_ARCHIVED": "Dự án đã lưu trữ. Bỏ lưu trữ để sửa.",
+    "TASK_ON_BOARD": "Việc này nằm trên bảng; hãy đổi cột để đổi trạng thái.",
+    "PARENT_DELETED": "Chưa khôi phục được: việc cha hoặc dự án chứa việc này vẫn ở thùng rác. Hãy khôi phục mục đó trước.",
+    "RATE_LIMITED": "Bạn thao tác quá nhanh. Vui lòng đợi một chút.",
+    "INTERNAL_ERROR": "Máy chủ gặp sự cố. Vui lòng thử lại.",
+    "NETWORK_ERROR": "Không kết nối được máy chủ. Kiểm tra mạng rồi thử lại.",
+    "generic": "Có lỗi xảy ra. Vui lòng thử lại."
+  },
+  "Warnings": {
+    "WIP_LIMIT_EXCEEDED": "Cột đã vượt giới hạn WIP; việc vẫn được lưu."
+  },
+  "States": {
+    "loadError": "Không tải được dữ liệu."
+  },
+  "QuickAdd": {
+    "label": "Thêm việc mới",
+    "placeholder": "Thêm việc… (Enter để lưu)",
+    "subtaskLabel": "Thêm việc con",
+    "subtaskPlaceholder": "Thêm việc con… (Enter để lưu)"
+  },
+  "Priority": {
+    "label": "Ưu tiên",
+    "URGENT": "Khẩn cấp",
+    "HIGH": "Cao",
+    "MEDIUM": "Trung bình",
+    "LOW": "Thấp"
+  },
+  "Status": {
+    "TODO": "Cần làm",
+    "IN_PROGRESS": "Đang làm",
+    "DONE": "Xong"
+  },
+  "EstimateUnit": {
+    "POINTS": "điểm",
+    "HOURS": "giờ"
+  },
+  "Task": {
+    "open": "Mở việc: {title}",
+    "markDone": "Đánh dấu xong: {title}",
+    "overdue": "Trễ hạn",
+    "due": "Hạn {date}",
+    "subtasks": "{done}/{total} việc con",
+    "saving": "Đang lưu việc mới"
+  },
+  "TaskDialog": {
+    "title": "Chi tiết việc",
+    "titleLabel": "Tiêu đề",
+    "description": "Mô tả",
+    "descriptionPlaceholder": "Mô tả (hỗ trợ Markdown)…",
+    "descriptionEmpty": "Chưa có mô tả. Bấm để thêm.",
+    "editDescription": "Sửa mô tả",
+    "doneEditing": "Xong",
+    "subtasks": "Việc con",
+    "subtasksEmpty": "Chưa có việc con.",
+    "activity": "Lịch sử hoạt động",
+    "activityEmpty": "Chưa có hoạt động.",
+    "status": "Trạng thái",
+    "column": "Cột",
+    "done": "Đã xong",
+    "due": "Hạn",
+    "allDay": "Cả ngày",
+    "time": "Giờ",
+    "pickDate": "Chọn ngày",
+    "noDue": "Không có hạn",
+    "clearDue": "Bỏ hạn",
+    "estimate": "Ước lượng",
+    "delete": "Xóa việc",
+    "deleted": "Đã chuyển việc vào thùng rác.",
+    "notFound": "Không tìm thấy việc này. Có thể nó đã bị xóa."
+  },
+  "Labels": {
+    "label": "Nhãn",
+    "choose": "Chọn nhãn",
+    "none": "Chưa có nhãn",
+    "newName": "Tên nhãn mới",
+    "create": "Tạo nhãn “{name}”",
+    "exists": "Đã có nhãn “{name}”, đã chọn nhãn đó."
+  },
+  "Activity": {
+    "TASK_CREATED": "Đã tạo việc",
+    "STATUS_CHANGED": "Đổi trạng thái",
+    "ESTIMATE_CHANGED": "Đổi ước lượng",
+    "DUE_CHANGED": "Đổi hạn",
+    "ADDED_TO_SPRINT": "Thêm vào sprint",
+    "REMOVED_FROM_SPRINT": "Bỏ khỏi sprint",
+    "DELETED": "Đã xóa",
+    "RESTORED": "Đã khôi phục"
+  },
+  "Inbox": {
+    "title": "Hộp thư",
+    "description": "Việc chưa thuộc dự án nào.",
+    "emptyTitle": "Hộp thư trống",
+    "emptyDescription": "Gõ vào ô phía trên rồi nhấn Enter để thêm việc."
+  },
+  "Projects": {
+    "title": "Dự án",
+    "filterLabel": "Lọc dự án",
+    "ACTIVE": "Đang làm",
+    "ARCHIVED": "Đã lưu trữ",
+    "new": "Dự án mới",
+    "emptyActiveTitle": "Chưa có dự án nào",
+    "emptyActiveDescription": "Tạo dự án để gom việc và theo dõi tiến độ.",
+    "emptyArchivedTitle": "Chưa có dự án lưu trữ",
+    "emptyArchivedDescription": "Dự án bạn lưu trữ sẽ nằm ở đây.",
+    "overdue": "{count, plural, other {# việc trễ hạn}}",
+    "archive": "Lưu trữ",
+    "unarchive": "Bỏ lưu trữ",
+    "actions": "Thao tác với dự án {name}",
+    "KANBAN": "Kanban",
+    "SCRUM": "Scrum"
+  },
+  "CreateProject": {
+    "title": "Tạo dự án",
+    "name": "Tên dự án",
+    "nameError": "Nhập tên dự án (tối đa 120 ký tự).",
+    "color": "Màu",
+    "workflow": "Quy trình",
+    "estimateUnit": "Đơn vị ước lượng",
+    "submit": "Tạo dự án"
+  },
+  "Colors": {
+    "indigo": "Chàm",
+    "blue": "Xanh dương",
+    "cyan": "Xanh lơ",
+    "teal": "Xanh mòng két",
+    "green": "Xanh lá",
+    "amber": "Hổ phách",
+    "orange": "Cam",
+    "red": "Đỏ",
+    "pink": "Hồng",
+    "fuchsia": "Hồng tím",
+    "violet": "Tím",
+    "slate": "Xám"
+  },
+  "Project": {
+    "columnTasks": "{count, plural, other {# việc}}",
+    "columnEmpty": "Chưa có việc",
+    "archivedNotice": "Dự án đã lưu trữ, chỉ xem được.",
+    "notFound": "Không tìm thấy dự án.",
+    "wip": "WIP {count}/{limit}"
+  },
+  "Progress": {
+    "label": "Tiến độ",
+    "weighted": "Theo ước lượng",
+    "count": "Theo số việc",
+    "summary": "{done}/{total} việc xong",
+    "estimateHint": "Thêm ước lượng để xem tiến độ chính xác hơn",
+    "overdueTitle": "Trễ hạn"
+  },
+  "Trash": {
+    "title": "Thùng rác",
+    "description": "Mục đã xóa được giữ lại cho tới khi bạn khôi phục.",
+    "emptyTitle": "Thùng rác trống",
+    "emptyDescription": "Việc và dự án bạn xóa sẽ nằm ở đây.",
+    "restore": "Khôi phục",
+    "restoreItem": "Khôi phục {title}",
+    "restored": "Đã khôi phục “{title}”.",
+    "task": "Việc",
+    "project": "Dự án",
+    "deletedAt": "Đã xóa {date}"
   }
 }

@@ -12,7 +12,7 @@ type NavSectionProps = {
 };
 
 /**
- * "Courses" / "Projects" group. The list stays empty until MVP-1/MVP-2; the add
+ * "Courses" group (projects use ProjectNavList). Stays empty until MVP-2; the add
  * button is visible but disabled (docs/10).
  */
 export function NavSection({ id, title, emptyText, addLabel }: NavSectionProps) {

@@ -78,3 +78,36 @@ export function parseIsoDate(value: string): Date {
 export function formatIsoDate(date: Date): string {
   return date.toISOString().slice(0, 10);
 }
+
+const ISO_TIME = /^([01]\d|2[0-3]):([0-5]\d)$/;
+
+/**
+ * Wall-clock date ("YYYY-MM-DD") and optional time ("HH:mm") in time zone `tz` → UTC ISO
+ * instant. Without a time it is 00:00 of that day, the storage rule for all-day due dates
+ * (NFR-32). Used by the due-date picker.
+ */
+export function zonedToUtcIso(date: string, time: string | null, tz: string): string {
+  const day = parseIsoDate(date);
+  const match = time === null ? null : ISO_TIME.exec(time);
+  if (time !== null && !match) throw new RangeError(`Invalid time: ${time}`);
+  inTz(day, tz); // validates the zone
+  const zoned = new TZDate(
+    day.getUTCFullYear(),
+    day.getUTCMonth(),
+    day.getUTCDate(),
+    match ? Number(match[1]) : 0,
+    match ? Number(match[2]) : 0,
+    tz,
+  );
+  return new Date(zoned.getTime()).toISOString();
+}
+
+/** Inverse of zonedToUtcIso: a UTC ISO instant → its wall-clock date and time in `tz`. */
+export function utcToZonedParts(iso: string, tz: string): { date: string; time: string } {
+  const zoned = inTz(new Date(iso), tz);
+  const pad = (value: number) => String(value).padStart(2, "0");
+  return {
+    date: `${zoned.getFullYear()}-${pad(zoned.getMonth() + 1)}-${pad(zoned.getDate())}`,
+    time: `${pad(zoned.getHours())}:${pad(zoned.getMinutes())}`,
+  };
+}
