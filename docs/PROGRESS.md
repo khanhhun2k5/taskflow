@@ -49,26 +49,27 @@ Checklist "Xong khi" của P0 trong file 10: đạt cả 4 mục.
 
 ## Việc tiếp theo
 
-**NFR-03 (500 việc) vẫn chưa đạt sau tối ưu** — tiêu chí: CPU thường, trung bình ≥ 50 fps khi kéo. Đo 2026-11-01 bằng Playwright + React Profiler (bản build `next build --profile`, `npm run db:seed:large` và `npm run db:seed:large -- 100`), máy dev, cùng một kịch bản: mở bảng, kéo thẻ đầu tiên của "Cần làm" sang "Đang làm" bằng chuột. "Trước" = commit `151d301`, "sau" = commit perf (memo + props ổn định, `DragOverlay`, đo mặc định khi đang kéo, ghi `TaskDTO` của `/move` vào cache thay vì tải lại bảng).
+**NFR-03 — tiêu chí mới (docs/08, sửa 2026-11-01).** Thay "trung bình ≥ 50 fps" bằng p95 khung hình ≤ 20 ms và long task dài nhất ≤ 100 ms (bảng ≤ 100 việc) / ≤ 300 ms (bảng 500 việc), vì trung bình fps bị vài long task lúc nhặt/thả kéo xuống và không phản ánh độ mượt khi kéo. **Kết quả:** bảng 100 việc **đạt**; bảng 500 việc **chưa đạt**. Đã dừng tối ưu tại đây.
 
-| Chỉ số (CPU thường) | 500 việc trước | 500 việc sau | 100 việc trước | 100 việc sau |
-|---|---|---|---|---|
-| **Khung hình khi kéo, trung bình** | 25 fps | **45 fps** ❌ | 54 fps | **58 fps** ✅ |
-| Khung hình p95 / tệ nhất | 167 ms / 1,2 s | 17 ms / 250 ms | 17 ms / 100 ms | 17 ms / 50 ms |
-| Long task khi kéo (số / dài nhất) | 12 / 1,1 s | 4 / 238 ms | 4 / 115 ms | 1 / 57 ms |
-| React commit (trung vị / lớn nhất / tổng) | 9,9 / 253 / 2954 ms | 4,2 / 69 / 727 ms | 1,4 / 24 / 378 ms | 1,1 / 17 / 183 ms |
-| Thả → commit cuối cùng | 2,1 s | 0,54 s | 0,34 s | 0,28 s |
-| Thẻ đầu tiên hiện sau khi mở trang | 1,5 s | 1,0 s | 0,48 s | 0,44 s |
+Cách đo (giữ nguyên qua mọi lần): Playwright + React Profiler trên bản build `next build --profile`, dữ liệu `npm run db:seed:large` / `npm run db:seed:large -- 100` tạo lại trước mỗi lần, mở bảng rồi kéo thẻ đầu tiên của "Cần làm" sang "Đang làm" bằng chuột; CPU thường, máy dev.
 
-Tham khảo, CPU chậm ×4 (trung bình fps / long task dài nhất): 500 việc 4 → 15 fps / 7,8 → 2,0 s; 100 việc 26 → 35 fps / 1,2 → 0,6 s.
+| CPU thường | 500 việc: p95 khung hình / long task dài nhất / fps TB | 100 việc: p95 / long task dài nhất / fps TB |
+|---|---|---|
+| Trước tối ưu (`151d301`) | 167 ms / 1,1 s / 25 | 17 ms / 115 ms / 54 |
+| Sau commit perf `c07c2cc` — lần đo 1 | 17 ms / 238 ms / 45 | 17 ms / 57 ms / 58 |
+| Sau commit perf — lần đo A/B (2 lần) | 33 ms / 312–372 ms / 39–40 | 17 ms / 72–85 ms / 56–58 |
+| Thử `content-visibility: auto` (A/B, 2 lần) | 33 ms / 312–316 ms / 41–42 | 17 ms / 92–103 ms / 55–56 |
+| **Tiêu chí** | **≤ 20 ms / ≤ 300 ms** | **≤ 20 ms / ≤ 100 ms** |
 
-Phần còn chậm ở 500 việc là vài long task (≈ 0,2 s) lúc nhặt thẻ và khi thẻ vào/ra cột 250 thẻ: dnd-kit đo lại vị trí mọi thẻ khi bắt đầu kéo, và mọi thẻ trong cột dùng `useSortable` render lại mỗi khi thứ tự trong `SortableContext` đổi (`memo` không chặn được vì đó là context). Bước tiếp đề xuất (chưa làm):
+Hai dòng "sau" khác nhau do tải máy lúc đo (cùng một code); bảng 500 việc sát hoặc vượt ngưỡng tùy lần đo, nên ghi là chưa đạt.
 
-1. `content-visibility: auto` + `contain-intrinsic-size` cho thẻ: trình duyệt bỏ qua layout/paint của thẻ ngoài màn hình, không đổi cây React nên không xung đột vùng thả.
-2. Tách phần `useSortable` khỏi phần hiển thị sâu hơn (thẻ ngoài vùng nhìn chỉ render khung tối thiểu), và đo lại sau bước 1.
-3. Nếu vẫn chưa đạt: ảo hóa cột (đề xuất c, đang hoãn vì xung đột vùng thả của sortable) hoặc "Hiện thêm" cho cột > 100 thẻ.
+**`content-visibility: auto` đã thử và bỏ.** Không cải thiện đo được (chênh lệch nằm trong nhiễu, bảng 100 việc có lần long task 103 ms > 100 ms), và cần thêm `shrink-0` cho thẻ: nếu thiếu, thẻ bị ép về 0 px trong cột flex, làm sai chiều cao cuộn và vị trí thả. Không làm sai vị trí thả khi đã có `shrink-0`, nhưng không đáng thêm. E2E `tests/e2e/long-column.spec.ts` (cột 250 thẻ, cuộn xuống cuối rồi thả giữa hai thẻ đang hiện, giữa cột và cuối cột; kiểm trên server, giao diện và sau khi tải lại) được giữ lại. Khi viết test này thấy: dnd-kit tự cuộn cột khi con trỏ ở gần mép trên/dưới, thẻ rơi đúng chỗ dưới con trỏ sau khi cuộn — đúng hành vi, test nhắm vào giữa vùng đang hiện.
 
-**Việc tiếp theo:** quyết định bước tiếp cho NFR-03, thử kéo bằng cảm ứng trên điện thoại (US-15), rồi mở PR MVP-1.
+**Phương án dự phòng cho bảng 500 việc (chưa làm):**
+1. Ảo hóa cột (chỉ render thẻ trong vùng nhìn). Cần giải quyết xung đột với vùng thả của `SortableContext` (thẻ ngoài vùng nhìn không có trong DOM nên không đo được), ví dụ dùng cột làm vùng thả và tự tính vị trí theo chỉ số.
+2. "Hiện thêm" cho cột > 100 thẻ: mặc định render 100 thẻ đầu, nút "Hiện thêm" tải tiếp; đơn giản hơn ảo hóa, đổi lại người dùng phải bấm để thả xuống sâu trong cột.
+
+**Việc tiếp theo:** thử kéo bằng cảm ứng trên điện thoại (US-15), rồi mở PR MVP-1. NFR-03 cho bảng 500 việc để lại, chọn một phương án dự phòng khi cần.
 
 **Ghi chú kỹ thuật c2:** `KeyboardSensor` của dnd-kit chỉ bắt phím sau một `setTimeout` kể từ lúc nhặt, nên phím bấm ngay sau Space có thể mất (E2E TC-92 bấm lại khi bị mất). Lỗi thật đã sửa: dữ liệu bảng tải lại giữa lúc kéo làm mất nước đi bằng bàn phím → bảng được "đóng băng" trong lúc kéo.
 
