@@ -21,7 +21,7 @@ Ràng buộc chung về hiệu năng, bảo mật, múi giờ, truy cập: `docs
 ## 2. Ý tưởng cốt lõi
 
 - **Mọi thứ là `Task`.** Bài tập, việc trong ngày, hạng mục dự án đều là `Task`. Môn học, dự án, lịch chỉ là cách nhóm và hiển thị. Không tạo bảng riêng cho "bài tập".
-- `Task.statusCategory` (`TODO` | `IN_PROGRESS` | `DONE`) là nguồn cho mọi phép tính tiến độ. Việc trên bảng luôn có `statusCategory` bằng nhóm trạng thái của cột chứa nó — chỉ đổi qua `moveTask` / `updateColumn` (ADR-03).
+- `Task.statusCategory` (`TODO` | `IN_PROGRESS` | `DONE`) là nguồn cho mọi phép tính tiến độ. Việc trên bảng luôn có `statusCategory` bằng nhóm trạng thái của cột chứa nó — `statusCategory` chỉ đổi qua `transitionStatus` (`src/server/services/status.ts`), gọi từ 3 lối vào: `moveTask`, `updateColumn`/`deleteColumn`, `setTaskStatus` (chỉ việc `columnId = null`) (ADR-03).
 - Mỗi tài khoản là một người dùng; **mọi** truy vấn lọc theo `userId` của phiên.
 
 ## 3. Công nghệ (đã chốt — hỏi trước khi đổi)

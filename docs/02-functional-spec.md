@@ -22,7 +22,7 @@ Trên bảng, người dùng đặt tên cột tùy ý ("Chờ review", "Đang t
 | Mã | Quy tắc |
 |---|---|
 | BR-01 | Khi một việc được đặt vào một cột, `Task.statusCategory` được gán bằng `Column.statusCategory` của cột đó, trong cùng một giao dịch DB. |
-| BR-02 | Việc không nằm trên bảng nào (việc lẻ) đổi trạng thái trực tiếp bằng ô đánh dấu. |
+| BR-02 | Việc không nằm trên bảng nào (việc lẻ) đổi trạng thái trực tiếp bằng ô đánh dấu. Áp dụng cho mọi việc có `columnId = null` (việc lẻ, việc con). Việc đang nằm trên bảng chỉ đổi trạng thái bằng cách chuyển cột; đổi trực tiếp → `422 TASK_ON_BOARD` (ADR-03). |
 | BR-03 | Khi `statusCategory` chuyển sang `DONE`, gán `completedAt = now()`. Khi rời khỏi `DONE`, gán `completedAt = null`. |
 | BR-04 | Việc có `dueAt` đã qua và `statusCategory ≠ DONE` là **trễ hạn**. Với hạn cả ngày (`dueAllDay = true`), việc chỉ trễ hạn khi `now` ≥ 00:00 của **ngày lịch kế tiếp** theo múi giờ người dùng (cộng một ngày lịch trong múi giờ đó, không cộng 24 giờ; xem NFR-32). |
 
@@ -40,8 +40,8 @@ Trên bảng, người dùng đặt tên cột tùy ý ("Chờ review", "Đang t
 | Mã | Quy tắc |
 |---|---|
 | BR-09 | Xóa việc, dự án, môn học là **xóa mềm** (`deletedAt`). Bản ghi xóa mềm bị loại khỏi mọi truy vấn và mọi phép tính. |
-| BR-10 | Xóa việc cha thì xóa mềm luôn việc con. Khôi phục việc cha thì khôi phục việc con bị xóa cùng lúc. |
-| BR-11 | Xóa dự án thì xóa mềm toàn bộ việc, cột, sprint của dự án. Xóa môn học **không** xóa việc; việc chỉ bỏ liên kết môn (`courseId = null`) — tránh mất dữ liệu ngoài ý muốn. |
+| BR-10 | Xóa việc cha thì xóa mềm luôn việc con. Khôi phục việc cha thì khôi phục việc con bị xóa cùng lúc. **Cách xác định "cùng lúc"** (chốt MVP-1b): khi xóa, cha và các con chưa xóa nhận **cùng một** giá trị `deletedAt` trong một giao dịch; khôi phục cha chỉ khôi phục các con có `deletedAt` bằng đúng giá trị đó. Việc con bị xóa riêng trước đó giữ nguyên trong thùng rác. Khôi phục việc con khi việc cha (hoặc dự án) vẫn đang bị xóa → `422 PARENT_DELETED`. |
+| BR-11 | Xóa dự án thì xóa mềm toàn bộ việc, cột, sprint của dự án (cột ẩn theo dự án, không có `deletedAt` riêng; việc dùng chung một `deletedAt` với dự án như BR-10, khôi phục dự án chỉ khôi phục các việc đó). Xóa môn học **không** xóa việc; việc chỉ bỏ liên kết môn (`courseId = null`) — tránh mất dữ liệu ngoài ý muốn. |
 | BR-12 | Thùng rác giữ 30 ngày. Sau đó xóa vĩnh viễn bằng tác vụ dọn dẹp (giai đoạn P4; trước đó giữ mãi). |
 
 ### 1.4 Thứ tự
@@ -58,9 +58,9 @@ Thuộc tính: tên, mô tả, màu, ngày bắt đầu, ngày kết thúc (tùy
 
 | Mã | Quy tắc |
 |---|---|
-| BR-20 | Tạo dự án thì tạo kèm một bảng với 3 cột mặc định: "Cần làm" (`TODO`), "Đang làm" (`IN_PROGRESS`), "Xong" (`DONE`). |
+| BR-20 | Tạo dự án thì tạo kèm một bảng với 3 cột mặc định: "Cần làm" (`TODO`), "Đang làm" (`IN_PROGRESS`), "Xong" (`DONE`). Tên cột lấy theo `User.locale` từ `messages/*.json` (`Board.defaultColumns`; en: "To do", "In progress", "Done"). |
 | BR-21 | Quy trình đổi được sau khi tạo. Đổi từ `SCRUM` sang `KANBAN` thì ẩn backlog/sprint nhưng giữ dữ liệu; đổi lại thì hiện lại. |
-| BR-22 | Dự án `ARCHIVED` chỉ đọc; không hiện ở trang Hôm nay. |
+| BR-22 | Dự án `ARCHIVED` chỉ đọc; không hiện ở trang Hôm nay. Mọi thao tác ghi vào dự án (việc, cột, bảng, sửa dự án) → `422 PROJECT_ARCHIVED`; riêng `PATCH /projects/:id` có `status: "ACTIVE"` vẫn được để bỏ lưu trữ. Xóa và khôi phục dự án vẫn được. |
 
 ### 2.2 Bảng của môn học
 
@@ -201,8 +201,8 @@ Việc của dự án `ARCHIVED` và việc đã xóa không hiện (BR-22, BR-0
 | Mã | Quy tắc |
 |---|---|
 | BR-80 | Ưu tiên có 4 mức: `URGENT`, `HIGH`, `MEDIUM`, `LOW`; mặc định `MEDIUM`. |
-| BR-81 | Nhãn thuộc người dùng, dùng chung giữa mọi dự án. Tên nhãn duy nhất (không phân biệt hoa thường) trong một tài khoản. |
-| BR-82 | Tìm kiếm theo tiêu đề và mô tả, không phân biệt hoa thường và **không phân biệt dấu** ("bao cao" tìm ra "Báo cáo"). |
+| BR-81 | Nhãn thuộc người dùng, dùng chung giữa mọi dự án. Tên nhãn duy nhất (không phân biệt hoa thường) trong một tài khoản; trùng → `409 LABEL_EXISTS`. |
+| BR-82 | Tìm kiếm theo tiêu đề và mô tả, không phân biệt hoa thường và **không phân biệt dấu** ("bao cao" tìm ra "Báo cáo"). `GET /tasks?q=` (MVP-1) chỉ tìm **tiêu đề** bằng `f_unaccent(lower(title)) LIKE`, khớp chỉ mục `task_title_trgm`; ký tự `%` `_` trong `q` là ký tự thường. Tìm cả mô tả thuộc `/search` (MVP-2). |
 
 ## 8. Nhắc hạn (giai đoạn P4)
 

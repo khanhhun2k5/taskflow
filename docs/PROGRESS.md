@@ -35,13 +35,21 @@ Checklist "Xong khi" của P0 trong file 10: đạt cả 4 mục.
 | Phần | Nội dung | Trạng thái |
 |---|---|---|
 | a | Tầng dữ liệu (7 model, migration `mvp1_tasks_kanban` + SQL viết tay) và hàm thuần (`ordering.ts`, `progress.ts`, `wip.ts`); TC-01…07, TC-20…25 dạng hàm/tích hợp | Nhánh `mvp1-tasks-kanban`, chưa commit |
-| b | API và tầng dịch vụ | Chưa bắt đầu |
+| b | Tầng dịch vụ (`tasks`, `projects`, `boards`, `labels`) + 16 Route Handler; TC-12…17, TC-20…23, TC-21b ở mức HTTP; `assertInvariants` sau mỗi thao tác ghi | Nhánh `mvp1-tasks-kanban`, chưa commit |
+| c | Giao diện (Hộp thư, dự án, Kanban, Danh sách, `TaskDialog`, `QuickAdd`, Thùng rác), TC-91, TC-92 | Chưa bắt đầu |
 
-**Ghi chú cho phần b:** `Task.estimate` trong DB là `Decimal`, hàm thuần nhận `number`. Đổi kiểu ở tầng dịch vụ, không làm trong domain. TC-20…22 hiện mới kiểm ở mức hàm thuần; mã lỗi HTTP (`409 WIP_LIMIT_EXCEEDED`, `warnings`) kiểm ở phần b.
+**Đã xử lý ở phần b:** đổi `Decimal → number` tại tầng dịch vụ (`decimalToNumber` trong `src/server/services/task-dto.ts`); TC-20…23 và TC-21b (đồng thời) kiểm ở mức HTTP (`tests/integration/wip-http.test.ts`).
+
+**Nợ kỹ thuật ghi nhận khi review phần b** (chưa ảnh hưởng đúng/sai, xem lại khi dữ liệu lớn):
+
+- `GET /tasks?q=` lấy toàn bộ id khớp tiêu đề rồi lọc `id IN (…)`; nên đưa điều kiện `f_unaccent` vào chính truy vấn danh sách.
+- `GET /trash` nạp mọi mục đã xóa vào bộ nhớ rồi mới phân trang; trước P4 thùng rác không tự dọn (BR-12).
+- Lỗi xung đột giao dịch hiếm gặp (Prisma `P2034`) đang trả `500`; thứ tự khóa cố định đã loại các deadlock đã biết.
+- Độ phủ 90% (NFR-61) chỉ đo `features/*/domain` và `lib`; tầng dịch vụ và route được kiểm bằng test tích hợp, không có số đo độ phủ.
 
 ## Việc tiếp theo
 
-**MVP-1 phần b** sau khi phần a được duyệt và merge.
+**MVP-1 phần c** (giao diện). PR của MVP-1 mở sau phần c.
 
 ## Câu hỏi còn mở
 

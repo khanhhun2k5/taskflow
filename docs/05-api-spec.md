@@ -8,7 +8,11 @@
 - Thời điểm gửi và nhận dạng ISO 8601 UTC (`"2026-11-03T02:00:00.000Z"`). Ngày thuần (không giờ) dạng `"2026-11-03"`.
 - Truy cập tài nguyên của người khác trả `404 NOT_FOUND` (không trả 403, để không lộ việc tài nguyên tồn tại).
 - Danh sách dùng phân trang con trỏ: `?cursor=<id>&limit=50` (mặc định 50, tối đa 200). Phản hồi: `{ items: [...], nextCursor: string | null }`.
-- `PATCH` chỉ gửi các trường cần đổi.
+- `PATCH` chỉ gửi các trường cần đổi. Body là object **strict**: khóa lạ → `400 VALIDATION_ERROR` (gồm `userId`; `courseId` trước MVP-2; `sprintId` trước MVP-3).
+- Tạo mới trả `201`. `DELETE` trả `204` (trừ `DELETE /columns/:id`, xem 2.3).
+- Thao tác có thể làm vượt WIP ở chế độ cảnh báo trả thêm `warnings: ["WIP_LIMIT_EXCEEDED"]` (rỗng `[]` nếu không vượt): `POST /tasks`, `PATCH /tasks/:id` (đổi dự án), `POST /tasks/:id/move`, `POST /tasks/:id/restore`, `POST /tasks/bulk`, `DELETE /columns/:id`.
+- Mọi danh sách sắp theo khóa ổn định (luôn kèm `id` khi giá trị sắp trùng). Con trỏ không thuộc người dùng → `400 VALIDATION_ERROR`.
+- Id trong đường dẫn hoặc trong body (`projectId`, `columnId`, `parentId`, `labelIds`, `ids`, `moveTo`) không thuộc người dùng → `404 NOT_FOUND`. `beforeId`/`afterId` không nằm trong cột đích → `400`.
 
 ### 1.1 Định dạng lỗi
 
@@ -30,11 +34,14 @@
 | 409 | `WIP_LIMIT_EXCEEDED` | BR-30 |
 | 409 | `SPRINT_ALREADY_ACTIVE` | BR-40 |
 | 409 | `SPRINT_NOT_ACTIVE` | Kết thúc sprint không ở trạng thái `ACTIVE` |
+| 409 | `LABEL_EXISTS` | Tên nhãn trùng, không phân biệt hoa thường (BR-81) |
 | 422 | `ESTIMATE_REQUIRED` | BR-41 |
 | 422 | `BOARD_NEEDS_TODO_AND_DONE` | BR-25 |
 | 422 | `SUBTASK_DEPTH_EXCEEDED` | BR-05 |
 | 422 | `INVALID_RECURRENCE_RULE` | BR-71 |
 | 422 | `PROJECT_ARCHIVED` | Ghi vào dự án đã lưu trữ (BR-22) |
+| 422 | `TASK_ON_BOARD` | Đổi trạng thái trực tiếp cho việc đang nằm trên bảng (BR-02, ADR-03) |
+| 422 | `PARENT_DELETED` | Khôi phục việc khi việc cha hoặc dự án chứa nó vẫn đang bị xóa (BR-10) |
 | 429 | `RATE_LIMITED` | NFR-11: route xác thực từ P0 (Better Auth); API ghi từ P5 |
 | 500 | `INTERNAL_ERROR` | Lỗi không lường trước; không lộ chi tiết |
 
@@ -110,7 +117,7 @@ type MeDTO = {
 
 | Phương thức | Đường dẫn | Mô tả | GĐ |
 |---|---|---|---|
-| GET | `/tasks` | Lọc: `projectId`, `courseId`, `inbox=true`, `status`, `priority`, `labelId`, `dueFrom`, `dueTo`, `overdue=true`, `q`, `sprintId`, `backlog=true`, `parentId`, `sort` | MVP-1 |
+| GET | `/tasks` | Lọc: `projectId`, `courseId` (từ MVP-2), `inbox=true` (việc cấp 1 không dự án, không môn), `status`, `priority`, `labelId`, `dueFrom`, `dueTo`, `overdue=true` (cùng quy tắc BR-04 theo `User.timezone`), `q` (chỉ tiêu đề, BR-82), `sprintId`, `backlog=true`, `parentId`, `sort` ∈ `order` (mặc định), `dueAt`, `-dueAt`, `priority`, `createdAt`, `-createdAt`, `title` | MVP-1 |
 | POST | `/tasks` | Tạo việc. Chỉ `title` bắt buộc | MVP-1 |
 | GET | `/tasks/:id` | Chi tiết + việc con + nhãn + 20 hoạt động gần nhất | MVP-1 |
 | PATCH | `/tasks/:id` | Sửa thuộc tính | MVP-1 |
@@ -118,7 +125,7 @@ type MeDTO = {
 | POST | `/tasks/:id/restore` | Khôi phục | MVP-1 |
 | POST | `/tasks/:id/move` | Đổi cột và/hoặc vị trí | MVP-1 |
 | POST | `/tasks/bulk` | Sửa hàng loạt (BR-31) | MVP-1 |
-| GET | `/trash` | Việc, dự án, môn học đã xóa trong 30 ngày | MVP-1 |
+| GET | `/trash` | Mục đã xóa khôi phục riêng được: dự án; việc không bị xóa kèm dự án; việc con không bị xóa kèm việc cha. Mới nhất trước. Trước P4 giữ mãi (BR-12). Phần tử `{ type: "task" \| "project", id, title, projectId, deletedAt }` | MVP-1 |
 
 **POST `/tasks`**
 
@@ -140,19 +147,24 @@ const createTaskSchema = z.object({
 });
 ```
 
-Phản hồi `201` với `TaskDTO`.
+Phản hồi `201` với `TaskDTO` và `warnings`. Có `parentId` → việc con: cùng dự án với cha (BR-06), không có cột (BR-07), không được kèm `columnId`.
+
+**PATCH `/tasks/:id`**: các trường của `createTaskSchema` (trừ `parentId`, `columnId`), giá trị `null` để xóa; thêm `statusCategory` (chỉ việc `columnId = null`, BR-02) và `projectId` (chỉ việc cấp 1; `null` = về Hộp thư; sang dự án khác thì vào cột đầu tiên cùng nhóm trạng thái, không có thì cột `TODO` đầu tiên; việc con đi theo). `labelIds` thay toàn bộ tập nhãn.
+
+**GET `/tasks/:id`**: `TaskDTO` + `subtasks: TaskDTO[]` + `activity: { id, type, fromValue, toValue, at }[]` (20 mục mới nhất).
 
 **POST `/tasks/:id/move`**
 
 ```ts
 const moveTaskSchema = z.object({
   columnId: z.string(),
-  beforeId: z.string().nullable(),   // việc ngay trên vị trí thả (null = đầu cột)
-  afterId: z.string().nullable(),    // việc ngay dưới vị trí thả (null = cuối cột)
+  beforeId: z.string().nullable(),   // việc ngay trên vị trí thả
+  afterId: z.string().nullable(),    // việc ngay dưới vị trí thả
+  // Server dùng beforeId nếu có, không thì afterId; cả hai null = cuối cột. Thả lên đầu cột: gửi afterId = việc đầu tiên.
 });
 ```
 
-Server tính khóa `order` mới nằm giữa `beforeId` và `afterId` (ADR-05), gán `statusCategory` theo cột (BR-01), kiểm tra WIP (BR-30), ghi `ActivityLog` nếu trạng thái đổi. Phản hồi `200` với `TaskDTO` và `warnings: ["WIP_LIMIT_EXCEEDED"]` khi vượt giới hạn ở chế độ cảnh báo.
+Server tự tìm hàng xóm thật từ `beforeId` (hoặc `afterId` nếu `beforeId` null; cả hai null = cuối cột) rồi tính khóa `order` mới (ADR-05), nên client có danh sách cũ cũng không sinh khóa trùng. Cột đích phải thuộc bảng của dự án chứa việc, nếu không → `400`; đổi dự án dùng `PATCH projectId`, gán `statusCategory` theo cột (BR-01), kiểm tra WIP (BR-30), ghi `ActivityLog` nếu trạng thái đổi. Phản hồi `200` với `TaskDTO` và `warnings: ["WIP_LIMIT_EXCEEDED"]` khi vượt giới hạn ở chế độ cảnh báo.
 
 **POST `/tasks/bulk`**
 
@@ -171,13 +183,13 @@ const bulkSchema = z.object({
 });
 ```
 
-Thực hiện trong một giao dịch: lỗi ở một việc thì không đổi việc nào.
+Thực hiện trong một giao dịch: lỗi ở một việc thì không đổi việc nào. Phản hồi `200` `{ updated: number, warnings }`. `move` chỉ nhận việc cấp 1 cùng bảng với cột đích và kiểm WIP cho cả lô; `setStatus` chỉ nhận việc không có cột (`422 TASK_ON_BOARD`); `delete` theo BR-10.
 
 ### 2.3 Dự án, bảng, cột
 
 | Phương thức | Đường dẫn | Mô tả | GĐ |
 |---|---|---|---|
-| GET | `/projects` | Danh sách + tiến độ tóm tắt (`progress`, `overdueCount`) | MVP-1 |
+| GET | `/projects` | Danh sách + tiến độ tóm tắt (`progress`: `P_w` nếu đủ ước lượng, ngược lại `P`; `overdueCount`). Lọc `status=ACTIVE\|ARCHIVED`; sắp mới nhất trước | MVP-1 |
 | POST | `/projects` | Tạo dự án + bảng + 3 cột (BR-20) | MVP-1 |
 | GET | `/projects/:id` | Chi tiết | MVP-1 |
 | PATCH | `/projects/:id` | Sửa, đổi quy trình, lưu trữ | MVP-1 |
@@ -187,7 +199,7 @@ Thực hiện trong một giao dịch: lỗi ở một việc thì không đổi
 | POST | `/boards/:id/columns` | Thêm cột | MVP-1 |
 | PATCH | `/columns/:id` | Đổi tên, nhóm trạng thái, WIP. Đổi nhóm trạng thái cập nhật mọi việc trong cột (ADR-03) | MVP-1 |
 | POST | `/columns/:id/move` | Đổi thứ tự cột (`beforeId`, `afterId`) | MVP-1 |
-| DELETE | `/columns/:id?moveTo=<columnId>` | Xóa cột, chuyển việc (BR-26) | MVP-1 |
+| DELETE | `/columns/:id?moveTo=<columnId>` | Xóa cột, chuyển việc (BR-26). Cột còn việc chưa xóa mà thiếu `moveTo` → `400`. Trả `200 { warnings }` (không phải `204`) vì có thể vượt WIP | MVP-1 |
 
 **GET `/boards/:id`** phản hồi:
 
@@ -208,7 +220,7 @@ type BoardDTO = {
 
 | Phương thức | Đường dẫn | Mô tả | GĐ |
 |---|---|---|---|
-| GET | `/projects/:id/progress` | `{ count: P, weighted: P_w, done, total, overdue: TaskDTO[] }` (file 07) | MVP-1 |
+| GET | `/projects/:id/progress` | `{ count: P, weighted: P_w, weightedReliable, done, total, overdue: TaskDTO[] }` (file 07). `weightedReliable` = đủ ước lượng để hiện `P_w` (file 07 mục 3); `count`, `weighted` là số thực 0–100 chưa làm tròn | MVP-1 |
 | GET | `/sprints/:id/burndown` | `{ days: [{ date, ideal, remaining, scope }] }` | MVP-3 |
 | GET | `/projects/:id/velocity` | `{ sprints: [{ id, name, committed, completed }], average }` | MVP-3 |
 

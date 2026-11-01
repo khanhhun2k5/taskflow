@@ -57,6 +57,12 @@ Mỗi quyết định ghi: bối cảnh, lựa chọn, lý do, hệ quả.
 - **Lựa chọn**: `Task.statusCategory` là cột thật. Với việc trên bảng, nó luôn bằng nhóm trạng thái của cột (BR-01), cập nhật trong cùng giao dịch.
 - **Lý do**: truy vấn "việc trễ hạn", "tiến độ" đơn giản và nhanh; việc lẻ vẫn có trạng thái.
 - **Hệ quả**: phải giữ hai giá trị đồng bộ. Mọi thao tác đổi cột hoặc đổi nhóm trạng thái của cột đi qua **một** hàm dịch vụ (`moveTask`, `updateColumn`) và có test (TC-12).
+- **Sửa đổi (MVP-1b, 2026-11-01)**: `statusCategory` chỉ được ghi bởi **một** hàm nội bộ `transitionStatus` (`src/server/services/status.ts`); hàm này đồng thời đặt `completedAt` (BR-03) và ghi `ActivityLog` `STATUS_CHANGED` (BR-95) trong giao dịch của bên gọi. Có đúng 3 lối vào gọi nó:
+  1. `moveTask` (kể cả đổi dự án qua `PATCH projectId`, khôi phục việc vào cột, bulk `move` — đều dùng lại lõi của `moveTask`);
+  2. `updateColumn` / `deleteColumn` (đổi nhóm trạng thái cột; chuyển việc khi xóa cột);
+  3. `setTaskStatus` — **chỉ** cho việc `columnId = null` (việc lẻ, việc con, BR-02), qua `PATCH { statusCategory }` và bulk `setStatus`. Việc đang nằm trên bảng gọi lối này → `422 TASK_ON_BOARD`.
+  
+  Giá trị khởi tạo khi tạo việc lấy theo cột đích (BR-01, BR-27) không tính là "đổi". **Quy tắc khóa** (sửa sau review MVP-1b, `src/server/services/guards.ts`): mọi thao tác ghi đụng tới bảng (`moveTask`, `createTask` có cột, đổi dự án, khôi phục, bulk `move`, `updateColumn`, `deleteColumn`, thêm/sắp cột) (1) khóa **mọi cột của bảng** bằng `SELECT … FOR UPDATE` (`lockBoardColumns`), (2) rồi khóa các dòng việc liên quan (`lockTasks`), mỗi bước theo `id` tăng dần, và (3) chỉ quyết định (nhóm trạng thái của cột, WIP, cột đích, trạng thái hiện tại của việc) bằng giá trị đọc **sau** khi khóa. `updateColumn`/`deleteColumn` chỉ xử lý việc **còn** nằm trong cột sau khi khóa. Thứ tự cố định (cột trước, việc sau) tránh deadlock; đọc sau khi khóa tránh quyết định trên dữ liệu cũ. Kiểm bằng TC-21b và `tests/integration/concurrency.test.ts` (move ∥ đổi nhóm cột, move ∥ xóa cột, hai move cùng một việc, hai bulk ngược thứ tự).
 
 ### ADR-04. Bảng thuộc dự án hoặc môn học
 
