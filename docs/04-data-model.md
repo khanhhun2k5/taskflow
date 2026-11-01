@@ -42,7 +42,12 @@ erDiagram
 Quy ước chung:
 
 - Khóa chính `id String @id @default(cuid(2))`.
-- Mọi thời điểm là `DateTime` lưu **UTC** (`timestamptz` trong PostgreSQL).
+- Mọi thời điểm là `DateTime` lưu **UTC** (`timestamptz` trong PostgreSQL). Trong file thật, mọi trường `DateTime` ghi kèm `@db.Timestamptz(3)` (Prisma mặc định tạo `timestamp` không múi giờ); bản đặc tả dưới đây lược bỏ thuộc tính này cho gọn.
+- **Hai quy ước ngày trong tuần, khác nhau có chủ ý:**
+  - `User.weekStartsOn` theo quy ước **date-fns** (`0` = Chủ nhật, `1` = thứ Hai; chỉ nhận `0` hoặc `1`; mặc định `1`). Truyền thẳng vào tùy chọn `weekStartsOn` của date-fns, không cần đổi.
+  - `ClassSession.weekday` theo **ISO 8601** (`1` = thứ Hai … `7` = Chủ nhật). Dùng với `getISODay` của date-fns và khớp `BYDAY` của RRULE.
+  - Không trộn hai quy ước: đổi giữa chúng phải qua hàm trong `src/lib/dates.ts`.
+- **Theo giai đoạn:** `schema.prisma` chỉ chứa model của các giai đoạn đã làm. P0 có `User`, `Session`, `Account`, `Verification`, `RateLimit` (migration `init_auth`); quan hệ từ `User` tới model nghiệp vụ và `extensions` được thêm ở giai đoạn giới thiệu chúng (MVP-1 trở đi).
 - Mọi bảng nghiệp vụ có `userId` và chỉ mục trên `userId`.
 - `createdAt`, `updatedAt` trên mọi bảng có thể sửa.
 
@@ -68,7 +73,7 @@ model User {
   image         String?
   timezone      String   @default("Asia/Ho_Chi_Minh")
   locale        String   @default("vi")
-  weekStartsOn  Int      @default(1)            // 1 = thứ Hai
+  weekStartsOn  Int      @default(1)            // date-fns: 0 = Chủ nhật, 1 = thứ Hai
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
@@ -123,10 +128,13 @@ model Verification {
   expiresAt  DateTime
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
+  @@index([identifier])   // theo output `npx auth@1.7.14 generate`
 }
 
 // Bộ đếm rate limit của Better Auth (NFR-11, storage: "database").
-// Trường chính xác lấy theo output của `npx @better-auth/cli generate`; khác thì cập nhật lại đây.
+// Đã đối chiếu với `npx auth@1.7.14 generate` (CLI Better Auth, gói `auth`) ngày 2026-11-01.
+// Khác biệt có chủ ý so với CLI: không dùng `@@map` (giữ tên bảng camelCase, mục 3);
+// `User.weekStartsOn` là `Int` không null (CLI sinh `Int?`).
 model RateLimit {
   id          String @id
   key         String @unique
@@ -346,7 +354,7 @@ model Course {
 model ClassSession {
   id        String  @id @default(cuid(2))
   courseId  String
-  weekday   Int                       // 1 = thứ Hai … 7 = Chủ nhật (ISO 8601)
+  weekday   Int                       // ISO 8601: 1 = thứ Hai … 7 = Chủ nhật (khác User.weekStartsOn, xem mục 2)
   startTime String  @db.VarChar(5)    // "HH:mm" giờ địa phương (BR-53)
   endTime   String  @db.VarChar(5)
   room      String? @db.VarChar(60)

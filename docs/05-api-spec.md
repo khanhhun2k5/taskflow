@@ -78,6 +78,34 @@ Cột "GĐ" là giai đoạn ra mắt (file 10).
 | GET | `/api/v1/me` | Thông tin người dùng + cài đặt | P0 |
 | PATCH | `/api/v1/me` | Đổi tên, múi giờ, ngôn ngữ, ngày đầu tuần | P0 |
 
+`GET /api/v1/me` trả `MeDTO`:
+
+```ts
+type MeDTO = {
+  id: string;
+  name: string;
+  email: string;
+  image: string | null;
+  timezone: string;        // IANA, ví dụ "Asia/Ho_Chi_Minh"
+  locale: "vi" | "en";
+  weekStartsOn: 0 | 1;     // quy ước date-fns: 0 = Chủ nhật, 1 = thứ Hai
+  createdAt: string;
+};
+```
+
+`PATCH /api/v1/me` (schema `updateMeSchema` trong `src/features/users/schemas.ts`, trả `MeDTO` mới):
+
+| Trường | Ràng buộc |
+|---|---|
+| `name` | Cắt khoảng trắng hai đầu; 1–100 ký tự |
+| `timezone` | Tên múi giờ IANA hợp lệ (`Intl.supportedValuesOf("timeZone")`) hoặc `"UTC"` |
+| `locale` | `"vi"` hoặc `"en"` |
+| `weekStartsOn` | `0` (Chủ nhật) hoặc `1` (thứ Hai) — quy ước **date-fns**. Khác `ClassSession.weekday` dùng ISO (`1` = thứ Hai … `7` = Chủ nhật), có chủ ý (file 04 mục 2) |
+
+- Mọi trường tùy chọn nhưng phải có ít nhất một trường.
+- Schema chặt: gửi trường lạ (`id`, `email`, `userId`…) → `400 VALIDATION_ERROR` (NFR-10).
+- Đăng ký (`/api/auth/sign-up/email`): mật khẩu ≥ 8 ký tự, sai → `400`; email trùng → `422 USER_ALREADY_EXISTS_USE_ANOTHER_EMAIL` (mã của Better Auth). Các trường `timezone`, `locale`, `weekStartsOn` không nhận lúc đăng ký, lấy giá trị mặc định.
+
 ### 2.2 Việc
 
 | Phương thức | Đường dẫn | Mô tả | GĐ |

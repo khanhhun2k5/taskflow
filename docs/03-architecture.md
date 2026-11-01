@@ -106,6 +106,8 @@ Mỗi quyết định ghi: bối cảnh, lựa chọn, lý do, hệ quả.
 - **Bối cảnh**: Next.js 16 có file chạy trước mọi request để chuyển hướng (các bản trước gọi là `middleware.ts`). Kiểm tra phiên đầy đủ ở đó cần truy vấn DB cho mọi request, kể cả tài nguyên tĩnh.
 - **Lựa chọn**:
   - **Tên file** theo tài liệu chính thức của Next.js 16 tại thời điểm khởi tạo. Khi tạo file, tra cứu tài liệu Next.js và ghi đường dẫn nguồn vào comment đầu file và vào mục này.
+    → **`src/proxy.ts`**, export hàm `proxy`. Next.js 16 đã đổi `middleware` thành `proxy` (`middleware` bị đánh dấu deprecated). Nguồn: `node_modules/next/dist/docs/01-app/03-api-reference/03-file-conventions/proxy.md` (next@16.4.3), https://nextjs.org/docs/app/api-reference/file-conventions/proxy, tra ngày 2026-11-01.
+  - Kiểm tra cookie bằng helper `getSessionCookie` của `better-auth/cookies`, không viết cứng tên cookie (production có tiền tố `__Secure-`, helper tự xử lý).
   - File đó **chỉ** kiểm tra có cookie phiên của Better Auth hay không: không có thì chuyển hướng tới `/login`. Không đọc DB, không giải mã phiên.
   - Kiểm tra phiên **đầy đủ** (phiên còn hạn, người dùng tồn tại) ở hai chỗ: layout của nhóm `(app)` (chuyển hướng về `/login` nếu không hợp lệ) và `withUser` trong `src/server/http.ts` (trả `401`).
 - **Lý do**: cookie có thể hết hạn hoặc bị giả; chỉ kiểm tra ở rìa thì không an toàn, chỉ kiểm tra ở layout thì chậm chuyển hướng. Hai lớp cho cả trải nghiệm nhanh lẫn an toàn.
