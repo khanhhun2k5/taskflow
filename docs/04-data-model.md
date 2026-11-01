@@ -526,3 +526,5 @@ Chỉ dùng khi dev. Tạo một người dùng `demo@taskflow.local` với:
 - 2 dự án: "Website cá nhân" (Kanban, 12 việc), "Ứng dụng đặt lịch" (Scrum, 2 sprint đã xong, 1 đang chạy).
 - 4 môn học, mỗi môn 2 buổi học/tuần, 3–5 bài tập, 3 điểm thành phần.
 - 5 việc lẻ trong Hộp thư, 2 trong số đó trễ hạn.
+
+**Đã làm (MVP-1):** người dùng demo (mật khẩu `demo-taskflow-123`, chỉ dùng khi dev), 2 dự án ("Website cá nhân" 12 việc + 3 việc con, cột Đang làm có WIP 3; "Ứng dụng đặt lịch" Scrum, 4 việc, **chưa có sprint** — MVP-3), 4 nhãn, 5 việc lẻ (2 trễ hạn). Môn học thêm ở MVP-2. Chạy `npx prisma db seed` (`tsx prisma/seed.ts`, khai báo trong `prisma.config.ts`); chạy lại được (chỉ dựng lại dữ liệu của người dùng demo); `NODE_ENV=production` thì dừng. `npm run db:seed:large` tạo thêm dự án "Kiểm thử 500 việc" (250/150/100 việc theo cột) để thử NFR-03.

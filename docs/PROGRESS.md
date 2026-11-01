@@ -37,7 +37,7 @@ Checklist "Xong khi" của P0 trong file 10: đạt cả 4 mục.
 | a | Tầng dữ liệu (7 model, migration `mvp1_tasks_kanban` + SQL viết tay) và hàm thuần (`ordering.ts`, `progress.ts`, `wip.ts`); TC-01…07, TC-20…25 dạng hàm/tích hợp | Nhánh `mvp1-tasks-kanban`, chưa commit |
 | b | Tầng dịch vụ (`tasks`, `projects`, `boards`, `labels`) + 16 Route Handler; TC-12…17, TC-20…23, TC-21b ở mức HTTP; `assertInvariants` sau mỗi thao tác ghi | Nhánh `mvp1-tasks-kanban`, chưa commit |
 | c1 | Nền giao diện: TanStack Query + `api-client`, cập nhật lạc quan + toast "Thử lại", Hộp thư, danh sách dự án, trang dự án (cột tĩnh), `TaskDialog`, `QuickAdd`, Thùng rác, thanh bên có dự án thật; `P2034` tự thử lại → `409 CONFLICT` | Nhánh `mvp1-tasks-kanban`, chưa commit |
-| c2 | `KanbanBoard` kéo thả, `ListView` (lọc, sắp xếp, chọn nhiều, danh sách ảo), TC-91, TC-92 | Chưa bắt đầu |
+| c2 | `KanbanBoard` kéo thả (chuột, cảm ứng, bàn phím), menu cột, `ListView` (lọc trong URL, sắp xếp, cuộn vô tận, danh sách ảo, sửa hàng loạt), tab kiểu xem, phím tắt, dự án lưu trữ chỉ đọc, seed; TC-91, TC-92 | Nhánh `mvp1-tasks-kanban`, chưa commit |
 
 **Đã xử lý ở phần b:** đổi `Decimal → number` tại tầng dịch vụ (`decimalToNumber` trong `src/server/services/task-dto.ts`); TC-20…23 và TC-21b (đồng thời) kiểm ở mức HTTP (`tests/integration/wip-http.test.ts`).
 
@@ -49,9 +49,28 @@ Checklist "Xong khi" của P0 trong file 10: đạt cả 4 mục.
 
 ## Việc tiếp theo
 
-**MVP-1 phần c2** (Kanban kéo thả, `ListView`). PR của MVP-1 mở sau phần c2.
+**NFR-03 (500 việc) chưa đạt** — đo 2026-11-01 bằng Playwright + React Profiler (bản build `next build --profile`, dữ liệu `npm run db:seed:large`), máy dev:
 
-**Giới hạn tạm của c1** (xử lý ở c2): Hộp thư và Thùng rác chỉ tải 200 mục đầu (có dòng báo khi còn nữa); trang dự án hiện cột dạng tĩnh, đổi trạng thái qua ô chọn cột trong `TaskDialog`; dự án đã lưu trữ vẫn mở được `TaskDialog`, thao tác ghi bị server từ chối (`PROJECT_ARCHIVED`) và hoàn tác kèm thông báo.
+| | CPU thường | CPU chậm ×4 |
+|---|---|---|
+| Thẻ đầu tiên hiện sau khi mở trang | 1,5 s | 3,1 s |
+| Khung hình khi kéo (trung bình / p95 / tệ nhất) | 25 fps / 167 ms / 1,2 s | 4 fps / 917 ms / 8,2 s |
+| Long task khi kéo (số / dài nhất) | 12 / 1,1 s | 63 / 7,8 s |
+| React commit khi kéo (trung vị / lớn nhất) | 9,9 ms / 253 ms | 59 ms / 1,6 s |
+
+Thẻ đã nằm ở cột đích ngay trong lúc kéo (không có độ trễ riêng khi thả), nhưng sau khi thả còn khoảng 2 s (CPU thường) render lại khi dữ liệu tải về.
+
+Nguyên nhân chính: mỗi lần kéo sang cột khác, cả 500 thẻ render lại (`arrange()` tạo object mới cho mọi việc; `board`, `actions` đổi tham chiếu mỗi lần render) và `MeasuringStrategy.BeforeDragging` đo lại cả 500 phần tử. Đề xuất sửa (chưa làm, chờ duyệt):
+
+1. Giữ nguyên tham chiếu các việc không đổi trong `arrange()`; props ổn định cho `TaskCard`/`BoardColumn` để React bỏ qua thẻ không đổi.
+2. `DragOverlay` cho thẻ đang kéo.
+3. Ảo hóa hoặc "Hiện thêm" cho cột dài (vd. > 50 thẻ).
+4. Chỉ đo các cột thay vì mọi thẻ.
+5. Sau `/move` thành công không tải lại cả bảng (đã có phản hồi của server); chỉ làm mới tiến độ.
+
+**Việc tiếp theo:** sửa NFR-03 theo đề xuất trên, thử kéo bằng cảm ứng trên điện thoại (US-15), rồi mở PR MVP-1.
+
+**Ghi chú kỹ thuật c2:** `KeyboardSensor` của dnd-kit chỉ bắt phím sau một `setTimeout` kể từ lúc nhặt, nên phím bấm ngay sau Space có thể mất (E2E TC-92 bấm lại khi bị mất). Lỗi thật đã sửa: dữ liệu bảng tải lại giữa lúc kéo làm mất nước đi bằng bàn phím → bảng được "đóng băng" trong lúc kéo.
 
 ## Câu hỏi còn mở
 

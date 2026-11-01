@@ -86,6 +86,7 @@ Bấm thẻ → mở `TaskDialog`. Thẻ có `role="button"` và nhãn đọc đ
 - Menu cột: đổi tên, nhóm trạng thái, đặt WIP, thêm cột bên trái/phải, xóa (hỏi cột đích).
 - Cuối mỗi cột: `QuickAdd` gọn.
 - Kéo thả: chuột, cảm ứng (nhấn giữ 200 ms), bàn phím (Space nhặt, mũi tên di chuyển, Space thả, Esc hủy). Trình đọc màn hình đọc thông báo: "Đã nhặt Viết báo cáo. Đang ở cột Đang làm, vị trí 2 trên 4."
+- **Cài đặt (MVP-1 c2):** `@dnd-kit/core` + `@dnd-kit/sortable`. Bắt đầu kéo bằng chuột khi rê ≥ 5 px; Enter trên thẻ mở `TaskDialog` (Space là phím kéo). Thả gửi `POST /move` với hàng xóm trên/dưới, chỉ số thả tính trên danh sách đã bỏ thẻ đang kéo (`src/features/boards/domain/drop.ts`); thả về chỗ cũ không gửi request. Trong lúc kéo, bảng hiển thị được "đóng băng" và không tải lại khi lấy lại tiêu điểm; nước đi đang chờ được áp lại lên dữ liệu server cho tới khi xong. Sắp cột bằng menu (Dời trái/phải) thay vì kéo cột.
 - Trong dự án Scrum, đầu trang có bộ chọn phạm vi (BR-47): **"Sprint hiện tại"** (mặc định) chỉ hiện việc thuộc sprint `ACTIVE`; **"Tất cả"** hiện mọi việc của dự án, kể cả việc ở backlog. Không có sprint đang chạy: trạng thái trống "Chưa có sprint đang chạy" kèm nút tới Backlog.
 
 ### 4.5 `ListView`
@@ -93,6 +94,7 @@ Bấm thẻ → mở `TaskDialog`. Thẻ có `role="button"` và nhãn đọc đ
 - Bảng cột: ô chọn, tiêu đề, trạng thái, ưu tiên, hạn, ước lượng, dự án/môn, nhãn.
 - Sắp xếp bằng cách bấm tiêu đề cột. Lọc bằng thanh lọc phía trên; bộ lọc ghi vào URL để chia sẻ/lưu dấu trang.
 - Chọn nhiều: thanh hành động nổi ở dưới (BR-31).
+- Bộ lọc ghi vào URL: `status`, `priority`, `label`, `from`, `to` (ngày theo `User.timezone`), `overdue`, `q`, `sort`; kiểu xem `view=kanban|list` (nhớ theo dự án trong `localStorage`, URL được ưu tiên). Tải từng trang 50 dòng theo `nextCursor` (cuộn vô tận, có nút "Tải thêm" cho bàn phím). "Đặt hạn" hàng loạt đặt 00:00 ngày đó theo `User.timezone`.
 - Nhiều hơn 100 dòng thì dùng danh sách ảo (virtualized, `@tanstack/react-virtual`) để giữ mượt.
 
 ### 4.6 Lịch (`DayGrid`, `WeekGrid`, `MonthGrid`)

@@ -45,9 +45,9 @@ Thời lượng ước tính cho **một người làm bán thời gian** (kho�
 
 **Xong khi**
 
-- [ ] US-10 … US-19 đạt tiêu chí chấp nhận.
-- [ ] TC-01 … TC-07, TC-12 … TC-17, TC-20 … TC-25, TC-60 … TC-64 chạy qua.
-- [ ] TC-91, TC-92 chạy qua.
+- [ ] US-10 … US-19 đạt tiêu chí chấp nhận. _(2026-11-01: có test cho US-10…19, trừ kéo bằng cảm ứng của US-15 — cần thử thủ công trên điện thoại; xem PROGRESS.md)_
+- [x] TC-01 … TC-07, TC-12 … TC-17, TC-20 … TC-25, TC-60 … TC-64 chạy qua. _(`npm run test:coverage`, 2026-11-01)_
+- [x] TC-91, TC-92 chạy qua. _(`tests/e2e/kanban.spec.ts`, 2026-11-01)_
 
 ## MVP-2. Môn học và lịch trình
 

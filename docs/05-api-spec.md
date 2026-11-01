@@ -118,7 +118,7 @@ type MeDTO = {
 
 | Phương thức | Đường dẫn | Mô tả | GĐ |
 |---|---|---|---|
-| GET | `/tasks` | Lọc: `projectId`, `courseId` (từ MVP-2), `inbox=true` (việc cấp 1 không dự án, không môn), `status`, `priority`, `labelId`, `dueFrom`, `dueTo`, `overdue=true` (cùng quy tắc BR-04 theo `User.timezone`), `q` (chỉ tiêu đề, BR-82), `sprintId`, `backlog=true`, `parentId`, `sort` ∈ `order` (mặc định), `dueAt`, `-dueAt`, `priority`, `createdAt`, `-createdAt`, `title` | MVP-1 |
+| GET | `/tasks` | Lọc: `projectId`, `courseId` (từ MVP-2), `inbox=true` (việc cấp 1 không dự án, không môn), `status`, `priority`, `labelId`, `dueFrom`, `dueTo`, `overdue=true` (cùng quy tắc BR-04 theo `User.timezone`), `q` (chỉ tiêu đề, BR-82), `sprintId`, `backlog=true`, `parentId`, `topLevel=true` (chỉ việc cấp 1, `parentId = null`; tab Danh sách của dự án), `sort` ∈ `order` (mặc định), `dueAt`, `-dueAt`, `priority`, `createdAt`, `-createdAt`, `title` | MVP-1 |
 | POST | `/tasks` | Tạo việc. Chỉ `title` bắt buộc | MVP-1 |
 | GET | `/tasks/:id` | Chi tiết + việc con + nhãn + 20 hoạt động gần nhất | MVP-1 |
 | PATCH | `/tasks/:id` | Sửa thuộc tính | MVP-1 |

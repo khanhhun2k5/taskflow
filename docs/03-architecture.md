@@ -11,13 +11,13 @@ Phiên bản ghi theo **số chính** (major). Khi khởi tạo, cài bản ổn
 | Giao diện | Tailwind CSS 4 + shadcn/ui (Radix) | Thành phần giao diện có sẵn khả năng truy cập |
 | Chế độ sáng/tối | next-themes | Sáng, tối, theo hệ thống; chống nháy màu khi tải trang (ADR-13) |
 | Biểu tượng | lucide-react | Bộ biểu tượng mặc định của shadcn/ui |
-| Kéo thả | @dnd-kit/core, @dnd-kit/sortable | Kanban, backlog, cột, lưới giờ; hỗ trợ bàn phím |
+| Kéo thả | @dnd-kit/core 6.3.1, @dnd-kit/sortable 10.0.0, @dnd-kit/utilities 3.2.2 | Kanban, backlog, cột, lưới giờ; hỗ trợ bàn phím |
 | Xử lý ngày giờ | date-fns 4 + @date-fns/tz | Tính toán ngày, múi giờ |
 | Biểu đồ | Recharts | Burndown, velocity |
 | Form | react-hook-form + @hookform/resolvers (`zodResolver`) | Nối schema Zod vào form |
 | Kiểm tra dữ liệu | Zod 4 | Dùng chung cho form, API, biến môi trường |
 | Dữ liệu phía client | TanStack Query 5 (`@tanstack/react-query` 5.105.0) | Bộ nhớ đệm, cập nhật lạc quan. Khóa query ở `src/features/query-keys.ts`; mutation lạc quan qua `src/features/optimistic.ts`; gọi API qua `src/lib/api-client.ts` |
-| Danh sách ảo | @tanstack/react-virtual | `ListView` > 100 dòng (file 06 mục 4.5) |
+| Danh sách ảo | @tanstack/react-virtual 3.14.24 | `ListView` > 100 dòng (file 06 mục 4.5) |
 | Hiển thị Markdown | react-markdown (10.1.0) | Mô tả việc; **không** dùng `rehype-raw` hay cho phép HTML thô (NFR-14) |
 | Thông báo (toast) | sonner (2.0.8) | Phụ thuộc của component shadcn `sonner`; toast lỗi có nút "Thử lại" (NFR-51). Thêm ở MVP-1 c1, người dùng đồng ý ngày 2026-11-01 |
 | Chọn ngày | react-day-picker (10.0.2) | Phụ thuộc của component shadcn `calendar` (ô hạn trong `TaskDialog`). Thêm ở MVP-1 c1, người dùng đồng ý ngày 2026-11-01 |
@@ -30,6 +30,7 @@ Phiên bản ghi theo **số chính** (major). Khi khởi tạo, cài bản ổn
 | Kiểm thử đầu-cuối | Playwright + @axe-core/playwright | Luồng chính + kiểm tra truy cập (file 09 mục 5) |
 | Chất lượng mã | ESLint (cấu hình Next), prettier | |
 | Môi trường dev | Docker Compose (PostgreSQL) | |
+| Chạy seed TypeScript | tsx 4.23.15 (dev) | `prisma/seed.ts` dùng alias `@/` và client Prisma sinh ra (import không đuôi file); Node chạy TypeScript trực tiếp không xử lý được hai điều này. Thêm ở MVP-1 c2, người dùng đồng ý ngày 2026-11-01 |
 | Triển khai | Vercel + PostgreSQL có quản lý (Neon hoặc Supabase) | |
 | CI | GitHub Actions | lint, typecheck, test, build, e2e |
 
