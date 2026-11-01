@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { keyBetween, keysForAppend } from "./ordering";
+import { keyAtIndex, keyBetween, keysForAppend } from "./ordering";
 
 /** Byte-wise comparison, the same as COLLATE "C" in PostgreSQL (ADR-05). */
 function isStrictlyAscending(keys: string[]): boolean {
@@ -49,5 +49,31 @@ describe("ordering (ADR-05)", () => {
   it("rejects an invalid count", () => {
     expect(() => keysForAppend(-1)).toThrow(RangeError);
     expect(() => keysForAppend(1.5)).toThrow(RangeError);
+  });
+});
+
+describe("keyAtIndex", () => {
+  it("inserts between neighbours without touching other keys (BR-13)", () => {
+    const keys = keysForAppend(3);
+    for (let index = 0; index <= keys.length; index += 1) {
+      const { key, rekeyed } = keyAtIndex(keys, index);
+      expect(rekeyed).toBeNull();
+      const merged = [...keys.slice(0, index), key, ...keys.slice(index)];
+      expect(isStrictlyAscending(merged)).toBe(true);
+    }
+    expect(keyAtIndex([], 0).rekeyed).toBeNull();
+  });
+
+  it("re-keys the list when the neighbours have equal keys", () => {
+    const keys = ["a0", "a1", "a1", "a2"];
+    const { key, rekeyed } = keyAtIndex(keys, 2);
+    expect(rekeyed).toHaveLength(4);
+    const merged = [...(rekeyed ?? []).slice(0, 2), key, ...(rekeyed ?? []).slice(2)];
+    expect(isStrictlyAscending(merged)).toBe(true);
+  });
+
+  it("rejects an index outside the list", () => {
+    expect(() => keyAtIndex(["a0"], 2)).toThrow(RangeError);
+    expect(() => keyAtIndex(["a0"], -1)).toThrow(RangeError);
   });
 });

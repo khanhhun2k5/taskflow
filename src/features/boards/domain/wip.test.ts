@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { checkWip, wipCount, type WipTask } from "./wip";
+import { checkWip, checkWipMany, wipCount, type WipTask } from "./wip";
 
 function parents(count: number, prefix = "p"): WipTask[] {
   return Array.from({ length: count }, (_, i) => ({
@@ -71,5 +71,44 @@ describe("WIP limits (BR-28…BR-30)", () => {
     const tasks = [...parents(2), { id: "gone", parentId: null, deleted: true }];
     expect(wipCount(tasks)).toBe(2);
     expect(checkWip(strictColumn, tasks, incoming)).toEqual({ allowed: true, warning: false });
+  });
+});
+
+describe("checkWipMany (bulk move, column deletion)", () => {
+  it("adds all new parent tasks at once", () => {
+    const moving = parents(2, "m");
+    expect(checkWipMany(strictColumn, parents(1), moving)).toEqual({
+      allowed: true,
+      warning: false,
+    });
+    expect(checkWipMany(strictColumn, parents(2), moving)).toEqual({
+      allowed: false,
+      warning: true,
+    });
+    expect(checkWipMany(warnColumn, parents(2), moving)).toEqual({ allowed: true, warning: true });
+  });
+
+  it("ignores subtasks, deleted tasks, duplicates and tasks already in the column", () => {
+    const existing = parents(3);
+    const moving: WipTask[] = [
+      existing[0],
+      { id: "sub", parentId: "x", deleted: false },
+      { id: "gone", parentId: null, deleted: true },
+    ];
+    expect(checkWipMany(strictColumn, existing, moving)).toEqual({
+      allowed: true,
+      warning: false,
+    });
+    expect(checkWipMany(strictColumn, parents(2), [incoming, incoming])).toEqual({
+      allowed: true,
+      warning: false,
+    });
+  });
+
+  it("no limit → always allowed", () => {
+    expect(checkWipMany({ wipLimit: null, wipStrict: true }, parents(9), parents(9, "m"))).toEqual({
+      allowed: true,
+      warning: false,
+    });
   });
 });

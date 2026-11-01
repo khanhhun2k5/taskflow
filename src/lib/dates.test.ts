@@ -1,6 +1,13 @@
 import { TZDate } from "@date-fns/tz";
 import { describe, expect, it } from "vitest";
-import { addDaysInTz, endOfDayInTz, isOverdue, startOfDayInTz } from "./dates";
+import {
+  addDaysInTz,
+  endOfDayInTz,
+  formatIsoDate,
+  isOverdue,
+  parseIsoDate,
+  startOfDayInTz,
+} from "./dates";
 
 const NEW_YORK = "America/New_York";
 
@@ -90,5 +97,18 @@ describe("day helpers", () => {
   it("returns plain Date instances", () => {
     const result = startOfDayInTz(new Date("2026-11-03T20:00:00Z"), NEW_YORK);
     expect(result.constructor).toBe(Date);
+  });
+});
+
+describe("plain ISO dates (@db.Date)", () => {
+  it("round-trips YYYY-MM-DD through UTC midnight", () => {
+    const date = parseIsoDate("2026-11-03");
+    expect(date.toISOString()).toBe("2026-11-03T00:00:00.000Z");
+    expect(formatIsoDate(date)).toBe("2026-11-03");
+  });
+
+  it("rejects malformed and impossible dates", () => {
+    expect(() => parseIsoDate("2026-02-30")).toThrow(RangeError);
+    expect(() => parseIsoDate("03/11/2026")).toThrow(RangeError);
   });
 });
