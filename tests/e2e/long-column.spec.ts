@@ -1,8 +1,9 @@
 import { expect, test, type Locator, type Page } from "@playwright/test";
 import { registerNewUser } from "./helpers";
 
-// NFR-03 guard: cards use content-visibility:auto, so off-screen cards are not laid out.
-// In a scrolled 250-card column, drops must land exactly where they are aimed.
+// Long columns (NFR-03 work): in a scrolled 250-card column, drops must land exactly where
+// they are aimed. Keep this when trying render optimizations for big boards (P5 "show more",
+// content-visibility, virtualization): they change layout of off-screen cards.
 
 const COUNT = 250;
 const pad = (n: number) => `Thẻ ${String(n).padStart(3, "0")}`;

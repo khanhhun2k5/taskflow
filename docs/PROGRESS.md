@@ -49,7 +49,7 @@ Checklist "Xong khi" của P0 trong file 10: đạt cả 4 mục.
 
 ## Việc tiếp theo
 
-**NFR-03 — tiêu chí mới (docs/08, sửa 2026-11-01).** Thay "trung bình ≥ 50 fps" bằng p95 khung hình ≤ 20 ms và long task dài nhất ≤ 100 ms (bảng ≤ 100 việc) / ≤ 300 ms (bảng 500 việc), vì trung bình fps bị vài long task lúc nhặt/thả kéo xuống và không phản ánh độ mượt khi kéo. **Kết quả:** bảng 100 việc **đạt**; bảng 500 việc **chưa đạt**. Đã dừng tối ưu tại đây.
+**NFR-03 — tiêu chí mới (docs/08, sửa 2026-11-01).** Thay "trung bình ≥ 50 fps" bằng p95 khung hình ≤ 20 ms và long task dài nhất ≤ 100 ms (bảng ≤ 100 việc) / ≤ 300 ms (bảng 500 việc), vì trung bình fps bị vài long task lúc nhặt/thả kéo xuống và không phản ánh độ mượt khi kéo. **Kết quả:** bảng 100 việc **đạt**; bảng 500 việc **chưa đạt — đã chấp nhận chuyển sang P5** (mục "Hiện thêm" cho cột > 100 thẻ trong docs/10). Đã dừng tối ưu tại đây.
 
 Cách đo (giữ nguyên qua mọi lần): Playwright + React Profiler trên bản build `next build --profile`, dữ liệu `npm run db:seed:large` / `npm run db:seed:large -- 100` tạo lại trước mỗi lần, mở bảng rồi kéo thẻ đầu tiên của "Cần làm" sang "Đang làm" bằng chuột; CPU thường, máy dev.
 
@@ -69,7 +69,7 @@ Hai dòng "sau" khác nhau do tải máy lúc đo (cùng một code); bảng 500
 1. Ảo hóa cột (chỉ render thẻ trong vùng nhìn). Cần giải quyết xung đột với vùng thả của `SortableContext` (thẻ ngoài vùng nhìn không có trong DOM nên không đo được), ví dụ dùng cột làm vùng thả và tự tính vị trí theo chỉ số.
 2. "Hiện thêm" cho cột > 100 thẻ: mặc định render 100 thẻ đầu, nút "Hiện thêm" tải tiếp; đơn giản hơn ảo hóa, đổi lại người dùng phải bấm để thả xuống sâu trong cột.
 
-**Việc tiếp theo:** thử kéo bằng cảm ứng trên điện thoại (US-15), rồi mở PR MVP-1. NFR-03 cho bảng 500 việc để lại, chọn một phương án dự phòng khi cần.
+**Việc tiếp theo:** thử kéo bằng cảm ứng trên điện thoại (US-15), rồi mở PR MVP-1. NFR-03 cho bảng 500 việc làm ở P5.
 
 **Ghi chú kỹ thuật c2:** `KeyboardSensor` của dnd-kit chỉ bắt phím sau một `setTimeout` kể từ lúc nhặt, nên phím bấm ngay sau Space có thể mất (E2E TC-92 bấm lại khi bị mất). Lỗi thật đã sửa: dữ liệu bảng tải lại giữa lúc kéo làm mất nước đi bằng bàn phím → bảng được "đóng băng" trong lúc kéo.
 

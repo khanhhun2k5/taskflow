@@ -48,6 +48,7 @@ Thời lượng ước tính cho **một người làm bán thời gian** (kho�
 - [ ] US-10 … US-19 đạt tiêu chí chấp nhận. _(2026-11-01: có test cho US-10…19, trừ kéo bằng cảm ứng của US-15 — cần thử thủ công trên điện thoại; xem PROGRESS.md)_
 - [x] TC-01 … TC-07, TC-12 … TC-17, TC-20 … TC-25, TC-60 … TC-64 chạy qua. _(`npm run test:coverage`, 2026-11-01)_
 - [x] TC-91, TC-92 chạy qua. _(`tests/e2e/kanban.spec.ts`, 2026-11-01)_
+- [x] NFR-03: đạt (≤ 100 việc); 500 việc chuyển P5. _(số đo: docs/08, docs/PROGRESS.md; 2026-11-01)_
 
 ## MVP-2. Môn học và lịch trình
 
@@ -100,6 +101,7 @@ Thời lượng ước tính cho **một người làm bán thời gian** (kho�
 
 - PWA: manifest, biểu tượng, service worker cho chế độ chỉ đọc khi mất mạng (US-54).
 - Kiểm tra NFR-01 … NFR-06; sửa các điểm chậm.
+- Nút "Hiện thêm" cho cột trên 100 thẻ để bảng 500 việc đạt NFR-03.
 - Giới hạn tần suất cho API ghi `/api/v1/*`: 120 lần/phút/người dùng, bộ đếm dùng chung giữa các instance serverless (NFR-11 (b)).
 - Rà soát khả năng truy cập toàn bộ (mục 5 file 09).
 
