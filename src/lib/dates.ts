@@ -6,7 +6,10 @@ import { addDays, endOfDay, startOfDay } from "date-fns";
 // IANA time zone. Never compare dates as strings (NFR-33) and never call `new Date()`
 // without arguments here: callers pass `now` (NFR-34).
 
-/** Mirrors `Task.statusCategory`; replaced by the Prisma enum once `Task` exists (MVP-1). */
+/**
+ * Mirrors the Prisma enum `StatusCategory` (`Task.statusCategory`). Domain code imports this
+ * type instead of Prisma; tests/integration/manual-db-objects.test.ts checks they match.
+ */
 export type StatusCategory = "TODO" | "IN_PROGRESS" | "DONE";
 
 function toPlainDate(date: Date): Date {
