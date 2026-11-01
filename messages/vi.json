@@ -1,0 +1,79 @@
+{
+  "Common": {
+    "appName": "TaskFlow",
+    "tagline": "Quản lý công việc cá nhân",
+    "comingSoon": "Sắp có",
+    "loading": "Đang tải…"
+  },
+  "Home": {
+    "openApp": "Vào ứng dụng"
+  },
+  "Nav": {
+    "label": "Điều hướng chính",
+    "today": "Hôm nay",
+    "inbox": "Hộp thư",
+    "calendar": "Lịch",
+    "courses": "Môn học",
+    "projects": "Dự án",
+    "coursesEmpty": "Chưa có môn học",
+    "projectsEmpty": "Chưa có dự án",
+    "addCourse": "Thêm môn",
+    "addProject": "Thêm dự án",
+    "trash": "Thùng rác",
+    "settings": "Cài đặt",
+    "projectsAndCourses": "Dự án & Môn",
+    "add": "Thêm"
+  },
+  "Header": {
+    "accountMenu": "Tài khoản",
+    "signOut": "Đăng xuất"
+  },
+  "Theme": {
+    "toggle": "Đổi giao diện",
+    "light": "Sáng",
+    "dark": "Tối",
+    "system": "Theo hệ thống"
+  },
+  "Auth": {
+    "or": "hoặc",
+    "continueWithGoogle": "Tiếp tục với Google",
+    "fields": {
+      "name": "Tên",
+      "email": "Email",
+      "password": "Mật khẩu"
+    },
+    "login": {
+      "title": "Đăng nhập",
+      "description": "Chào mừng bạn quay lại TaskFlow.",
+      "submit": "Đăng nhập",
+      "noAccount": "Chưa có tài khoản?",
+      "registerLink": "Đăng ký"
+    },
+    "register": {
+      "title": "Đăng ký",
+      "description": "Tạo tài khoản để bắt đầu sắp xếp công việc.",
+      "submit": "Đăng ký",
+      "haveAccount": "Đã có tài khoản?",
+      "loginLink": "Đăng nhập"
+    },
+    "errors": {
+      "emailInvalid": "Email không hợp lệ.",
+      "passwordRequired": "Nhập mật khẩu.",
+      "nameInvalid": "Nhập tên (tối đa {max} ký tự).",
+      "passwordTooShort": "Mật khẩu cần ít nhất {min} ký tự.",
+      "tooManyAttempts": "Bạn thử quá nhiều lần. Vui lòng đợi một phút.",
+      "invalidCredentials": "Email hoặc mật khẩu không đúng.",
+      "emailTaken": "Email này đã được đăng ký.",
+      "registerFailed": "Không đăng ký được. Vui lòng thử lại."
+    }
+  },
+  "Today": {
+    "title": "Hôm nay",
+    "empty": {
+      "title": "Hôm nay bạn rảnh!",
+      "description": "Thêm việc hoặc xem lịch tuần.",
+      "addTask": "Thêm việc",
+      "viewWeek": "Xem lịch tuần"
+    }
+  }
+}

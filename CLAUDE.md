@@ -26,7 +26,7 @@ Ràng buộc chung về hiệu năng, bảo mật, múi giờ, truy cập: `docs
 
 ## 3. Công nghệ (đã chốt — hỏi trước khi đổi)
 
-Next.js 16 (App Router) · React 19 · TypeScript strict · Tailwind 4 + shadcn/ui · lucide-react · @dnd-kit · date-fns 4 + @date-fns/tz · Recharts · react-hook-form + @hookform/resolvers + Zod 4 · TanStack Query 5 + @tanstack/react-virtual · Prisma 7 · PostgreSQL 17 (mọi môi trường, Docker khi dev) · Better Auth · next-intl · fractional-indexing · react-markdown (cấm `rehype-raw`) · Vitest + @testing-library/react + @testing-library/user-event + jsdom · Playwright + @axe-core/playwright · ESLint + Prettier.
+Next.js 16 (App Router) · React 19 · TypeScript strict · Tailwind 4 + shadcn/ui · next-themes · lucide-react · @dnd-kit · date-fns 4 + @date-fns/tz · Recharts · react-hook-form + @hookform/resolvers + Zod 4 · TanStack Query 5 + @tanstack/react-virtual · Prisma 7 · PostgreSQL 17 (mọi môi trường, Docker khi dev) · Better Auth · next-intl · fractional-indexing · react-markdown (cấm `rehype-raw`) · Vitest + @testing-library/react + @testing-library/user-event + jsdom · Playwright + @axe-core/playwright · ESLint + Prettier.
 
 Lý do từng lựa chọn: `docs/03-architecture.md` mục 2 (ADR).
 
@@ -35,6 +35,7 @@ Lý do từng lựa chọn: `docs/03-architecture.md` mục 2 (ADR).
 ```bash
 docker compose up -d db
 npm install
+npm run env:init          # tạo .env lần đầu
 npx prisma migrate dev
 npx prisma db seed
 npm run dev

@@ -9,6 +9,7 @@ Phiên bản ghi theo **số chính** (major). Khi khởi tạo, cài bản ổn
 | Ngôn ngữ | TypeScript 5, chế độ `strict` | Toàn bộ dự án |
 | Khung ứng dụng | Next.js 16 (App Router) + React 19 | Giao diện, định tuyến, API |
 | Giao diện | Tailwind CSS 4 + shadcn/ui (Radix) | Thành phần giao diện có sẵn khả năng truy cập |
+| Chế độ sáng/tối | next-themes | Sáng, tối, theo hệ thống; chống nháy màu khi tải trang (ADR-13) |
 | Biểu tượng | lucide-react | Bộ biểu tượng mặc định của shadcn/ui |
 | Kéo thả | @dnd-kit/core, @dnd-kit/sortable | Kanban, backlog, cột, lưới giờ; hỗ trợ bàn phím |
 | Xử lý ngày giờ | date-fns 4 + @date-fns/tz | Tính toán ngày, múi giờ |
@@ -128,12 +129,20 @@ Mỗi quyết định ghi: bối cảnh, lựa chọn, lý do, hệ quả.
   - Fallback khung xương phải giữ đúng kích thước bố cục để tránh nhảy giao diện (file 06).
   - Không dùng `"use cache"` hay `"use cache: remote"` cho dữ liệu theo người dùng mà không truyền `userId` làm tham số; dữ liệu đọc thẳng từ cookie chỉ được cache bằng `"use cache: private"`. Hiện tại chưa dùng các chỉ thị cache; thêm vào thì phải ghi ADR.
   - Route Handler `/api/v1/*` và file chặn route ở rìa (ADR-11) không bị ảnh hưởng.
+  - **Ngôn ngữ theo người dùng (P0c):** next-intl đọc `User.locale` và `User.timezone` từ phiên (`src/i18n/request.ts`, không tiền tố URL), nên mọi phần có chữ hiển thị — kể cả thanh bên, header, trang `/login` — nằm trong `<Suspense>` (thành phần `IntlBoundary`). Khung tĩnh prerender chỉ còn khung xương đúng kích thước. `<html lang>` ở root layout cố định `vi`; `IntlBoundary` đặt `lang` cho nội dung và cập nhật `<html lang>` sau khi hydrate. Phiên chỉ đọc một lần mỗi request nhờ `getCurrentSession` (`src/server/session.ts`, React `cache`).
   - Nếu một route chưa kịp tách `<Suspense>`, tạm đặt `export const instant = false` trên page/layout đó và ghi TODO; không tắt `cacheComponents` toàn cục khi chưa có ADR mới.
 - **Nguồn** (tài liệu đi kèm `next@16.4.3`, `node_modules/next/dist/docs/`, tra ngày 2026-11-01):
   - `01-app/03-api-reference/05-config/01-next-config-js/cacheComponents.md` — https://nextjs.org/docs/app/api-reference/config/next-config-js/cacheComponents
   - `01-app/01-getting-started/08-caching.md` (mục "Streaming uncached data", runtime API `cookies`/`headers` cần `<Suspense>`) — https://nextjs.org/docs/app/getting-started/caching
   - `01-app/02-guides/authentication-with-cache-components.md` (đọc phiên lúc request luôn nằm sau `<Suspense>`; `instant = false` khi chuyển đổi dần) — https://nextjs.org/docs/app/guides/authentication-with-cache-components
   - `01-app/02-guides/adopting-partial-prefetching.md` — https://nextjs.org/docs/app/guides/adopting-partial-prefetching
+
+### ADR-13. Chế độ sáng/tối bằng `next-themes`
+
+- **Bối cảnh**: docs/06 mục 7 yêu cầu sáng, tối và theo hệ thống. Lựa chọn lưu ở trình duyệt; nếu áp dụng sau khi hydrate thì trang nháy màu (FOUC).
+- **Lựa chọn**: thêm `next-themes` (P0c, người dùng đồng ý ngày 2026-11-01). `ThemeProvider` với `attribute="class"`, `defaultTheme="system"`, khớp `@custom-variant dark` trong `globals.css`. Nút chuyển ở header (`ThemeToggle`) và trang xác thực.
+- **Lý do**: thư viện chuẩn mà shadcn/ui dùng, rất nhỏ, có sẵn script chặn chạy trước khi vẽ trang, đồng bộ giữa các tab, theo dõi `prefers-color-scheme`. Tự viết phải tự lo các việc này và test.
+- **Hệ quả**: `<html suppressHydrationWarning>` ở root layout. Lựa chọn giao diện lưu `localStorage` theo trình duyệt, chưa đồng bộ vào tài khoản (trang Cài đặt sau này có thể thêm).
 
 ## 3. Sơ đồ tầng
 
@@ -243,6 +252,7 @@ Giới hạn tần suất (NFR-11): từ P0 dùng tính năng rate limit có s�
 ```bash
 docker compose up -d db     # bật PostgreSQL
 npm install
+npm run env:init            # tạo .env từ .env.example (secret ngẫu nhiên), không ghi đè
 npx prisma migrate dev      # tạo/áp dụng migration
 npx prisma db seed          # nạp dữ liệu mẫu
 npm run dev
