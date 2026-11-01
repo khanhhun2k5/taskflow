@@ -1,7 +1,7 @@
 import { beforeAll, describe, expect, it } from "vitest";
 import type { BoardDTO } from "@/features/boards/schemas";
 import type { TaskDTO, WithWarnings } from "@/features/tasks/schemas";
-import type { TaskDetailDTO } from "@/server/services/tasks";
+import type { TaskDetailDTO } from "@/features/tasks/schemas";
 import { prisma } from "@/server/db";
 import { api, errorCode, type TestUser } from "./api";
 import { createProject, createTask, newUser, type ProjectFixture } from "./fixtures";

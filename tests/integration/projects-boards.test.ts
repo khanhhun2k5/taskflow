@@ -7,7 +7,7 @@ import type {
 } from "@/features/projects/schemas";
 import type { TaskDTO } from "@/features/tasks/schemas";
 import type { Page } from "@/lib/pagination";
-import type { TrashItemDTO } from "@/server/services/tasks";
+import type { TrashItemDTO } from "@/features/tasks/schemas";
 import { prisma } from "@/server/db";
 import { api, errorCode, type TestUser } from "./api";
 import { createProject, createTask, newUser } from "./fixtures";
@@ -114,6 +114,18 @@ describe("projects (BR-20…BR-22)", () => {
     const item = list.body.items.find((project) => project.id === fx.project.id);
     expect(item?.overdueCount).toBe(1);
     expect(item?.progress).toBe(50); // no estimates → P (docs/07 section 3)
+    expect(item?.weightedReliable).toBe(false);
+  });
+
+  it("GET /projects shows P_w and weightedReliable once half the tasks are estimated", async () => {
+    const fx = await createProject(user, "Estimated");
+    await createTask(user, { title: "Small", projectId: fx.project.id, estimate: 2 });
+    await createTask(user, { title: "Big", columnId: fx.done.id, estimate: 6 });
+
+    const list = await api<Page<ProjectListItemDTO>>(user, "GET", "/projects?limit=200");
+    const item = list.body.items.find((project) => project.id === fx.project.id);
+    expect(item?.weightedReliable).toBe(true);
+    expect(item?.progress).toBe(75); // P_w = 6 / (2 + 6); P would be 50
   });
 });
 

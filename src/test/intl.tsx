@@ -1,3 +1,4 @@
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, type RenderOptions } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
 import type { ReactElement } from "react";
@@ -7,15 +8,30 @@ import vi from "../../messages/vi.json";
 
 const messages = { vi, en };
 
-/** Renders a component with the app's real messages, like the (app) layout does. */
+/** A QueryClient for tests: no retries, nothing refetched behind the test's back. */
+export function createTestQueryClient() {
+  return new QueryClient({
+    defaultOptions: {
+      queries: { retry: false, staleTime: Infinity, refetchOnWindowFocus: false },
+      mutations: { retry: false },
+    },
+  });
+}
+
+type Options = RenderOptions & { locale?: "vi" | "en"; queryClient?: QueryClient };
+
+/** Renders a component with the app's real messages and a QueryClient, like the (app) layout. */
 export function renderWithIntl(
   ui: ReactElement,
-  { locale = "vi", ...options }: RenderOptions & { locale?: "vi" | "en" } = {},
+  { locale = "vi", queryClient = createTestQueryClient(), ...options }: Options = {},
 ) {
-  return render(
-    <NextIntlClientProvider locale={locale} messages={messages[locale]} timeZone="UTC">
-      <TooltipProvider>{ui}</TooltipProvider>
-    </NextIntlClientProvider>,
+  const result = render(
+    <QueryClientProvider client={queryClient}>
+      <NextIntlClientProvider locale={locale} messages={messages[locale]} timeZone="UTC">
+        <TooltipProvider>{ui}</TooltipProvider>
+      </NextIntlClientProvider>
+    </QueryClientProvider>,
     options,
   );
+  return { ...result, queryClient };
 }

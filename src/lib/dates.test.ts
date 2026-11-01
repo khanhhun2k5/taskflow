@@ -7,6 +7,8 @@ import {
   isOverdue,
   parseIsoDate,
   startOfDayInTz,
+  utcToZonedParts,
+  zonedToUtcIso,
 } from "./dates";
 
 const NEW_YORK = "America/New_York";
@@ -110,5 +112,35 @@ describe("plain ISO dates (@db.Date)", () => {
   it("rejects malformed and impossible dates", () => {
     expect(() => parseIsoDate("2026-02-30")).toThrow(RangeError);
     expect(() => parseIsoDate("03/11/2026")).toThrow(RangeError);
+  });
+});
+
+describe("zoned wall-clock ↔ UTC (due-date picker)", () => {
+  it("stores an all-day due date as 00:00 in the user's zone (NFR-32)", () => {
+    expect(zonedToUtcIso("2026-11-03", null, "Asia/Ho_Chi_Minh")).toBe("2026-11-02T17:00:00.000Z");
+  });
+
+  it("converts a time of day, including across a DST change", () => {
+    expect(zonedToUtcIso("2026-11-03", "09:30", "Asia/Ho_Chi_Minh")).toBe(
+      "2026-11-03T02:30:00.000Z",
+    );
+    expect(zonedToUtcIso("2026-03-08", "12:00", NEW_YORK)).toBe("2026-03-08T16:00:00.000Z");
+    expect(zonedToUtcIso("2026-03-07", "12:00", NEW_YORK)).toBe("2026-03-07T17:00:00.000Z");
+  });
+
+  it("round-trips through utcToZonedParts", () => {
+    const iso = zonedToUtcIso("2026-12-31", "23:45", "Asia/Ho_Chi_Minh");
+    expect(utcToZonedParts(iso, "Asia/Ho_Chi_Minh")).toEqual({ date: "2026-12-31", time: "23:45" });
+    expect(utcToZonedParts("2026-11-02T17:00:00.000Z", "UTC")).toEqual({
+      date: "2026-11-02",
+      time: "17:00",
+    });
+  });
+
+  it("rejects bad times, dates and zones", () => {
+    expect(() => zonedToUtcIso("2026-11-03", "24:00", "UTC")).toThrow(RangeError);
+    expect(() => zonedToUtcIso("2026-02-30", null, "UTC")).toThrow(RangeError);
+    expect(() => zonedToUtcIso("2026-11-03", null, "Mars/Base")).toThrow(RangeError);
+    expect(() => utcToZonedParts("2026-11-03T00:00:00.000Z", "Mars/Base")).toThrow(RangeError);
   });
 });

@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import en from "../../messages/en.json";
 import vi from "../../messages/vi.json";
+import { ERROR_STATUS } from "@/server/errors";
 import { resolveLocale } from "./locales";
 
 function flatten(value: unknown, prefix = ""): Map<string, unknown> {
@@ -46,5 +47,17 @@ describe("resolveLocale (NFR-41)", () => {
     expect(resolveLocale("fr")).toBe("vi");
     expect(resolveLocale(undefined)).toBe("vi");
     expect(resolveLocale(null)).toBe("vi");
+  });
+});
+
+describe("error messages (docs/06 section 6)", () => {
+  // Every server code (docs/05 section 1.1) plus the client-only NETWORK_ERROR.
+  const codes = [...Object.keys(ERROR_STATUS), "NETWORK_ERROR", "generic"];
+
+  it.each([
+    ["vi", vi.Errors],
+    ["en", en.Errors],
+  ])("%s.json translates every error code", (_locale, errors) => {
+    expect(codes.filter((code) => !(code in errors))).toEqual([]);
   });
 });
