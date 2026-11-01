@@ -9,7 +9,7 @@ _Cập nhật: 2026-11-01._
 | Giai đoạn | Trạng thái |
 |---|---|
 | P0. Nền móng | ✅ Hoàn tất |
-| MVP-1. Việc, dự án, Kanban | ⏭️ Tiếp theo |
+| MVP-1. Việc, dự án, Kanban | 🚧 Đang làm (phần a) |
 | MVP-2. Môn học và lịch trình | Chưa bắt đầu |
 | MVP-3. Scrum | Chưa bắt đầu |
 | P4. Mở rộng | Chưa bắt đầu |
@@ -30,9 +30,18 @@ Checklist "Xong khi" của P0 trong file 10: đạt cả 4 mục.
 - CI xanh trên pull request: PR #1.
 - `.env.example` đầy đủ; README chạy từ đầu trong 5 lệnh.
 
+## MVP-1. Việc, dự án, Kanban — đang làm
+
+| Phần | Nội dung | Trạng thái |
+|---|---|---|
+| a | Tầng dữ liệu (7 model, migration `mvp1_tasks_kanban` + SQL viết tay) và hàm thuần (`ordering.ts`, `progress.ts`, `wip.ts`); TC-01…07, TC-20…25 dạng hàm/tích hợp | Nhánh `mvp1-tasks-kanban`, chưa commit |
+| b | API và tầng dịch vụ | Chưa bắt đầu |
+
+**Ghi chú cho phần b:** `Task.estimate` trong DB là `Decimal`, hàm thuần nhận `number`. Đổi kiểu ở tầng dịch vụ, không làm trong domain. TC-20…22 hiện mới kiểm ở mức hàm thuần; mã lỗi HTTP (`409 WIP_LIMIT_EXCEEDED`, `warnings`) kiểm ở phần b.
+
 ## Việc tiếp theo
 
-**MVP-1 phần a.** Phạm vi MVP-1 ở file 10. Cách chia các phần a/b/… chưa chốt: tóm tắt kế hoạch (file sẽ đụng, `BR`/`TC` liên quan) và chốt với người dùng trước khi code.
+**MVP-1 phần b** sau khi phần a được duyệt và merge.
 
 ## Câu hỏi còn mở
 

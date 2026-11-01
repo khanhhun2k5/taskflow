@@ -26,7 +26,7 @@ Ràng buộc chung về hiệu năng, bảo mật, múi giờ, truy cập: `docs
 
 ## 3. Công nghệ (đã chốt — hỏi trước khi đổi)
 
-Next.js 16 (App Router) · React 19 · TypeScript strict · Tailwind 4 + shadcn/ui · next-themes · lucide-react · @dnd-kit · date-fns 4 + @date-fns/tz · Recharts · react-hook-form + @hookform/resolvers + Zod 4 · TanStack Query 5 + @tanstack/react-virtual · Prisma 7 · PostgreSQL 17 (mọi môi trường, Docker khi dev) · Better Auth · next-intl · fractional-indexing · react-markdown (cấm `rehype-raw`) · Vitest + @testing-library/react + @testing-library/user-event + jsdom · Playwright + @axe-core/playwright · ESLint + Prettier.
+Next.js 16 (App Router) · React 19 · TypeScript strict · Tailwind 4 + shadcn/ui · next-themes · lucide-react · @dnd-kit · date-fns 4 + @date-fns/tz · Recharts · react-hook-form + @hookform/resolvers + Zod 4 · TanStack Query 5 + @tanstack/react-virtual · Prisma 7 · PostgreSQL 17 (mọi môi trường, Docker khi dev) · Better Auth · next-intl · fractional-indexing · react-markdown (cấm `rehype-raw`) · Vitest + @vitest/coverage-v8 + @testing-library/react + @testing-library/user-event + jsdom · Playwright + @axe-core/playwright · ESLint + Prettier.
 
 Lý do từng lựa chọn: `docs/03-architecture.md` mục 2 (ADR).
 
@@ -42,6 +42,7 @@ npm run dev
 npm run lint
 npm run typecheck
 npm run test
+npm run test:coverage     # NFR-61: ≥ 90% dòng cho features/*/domain và lib
 npm run test:e2e
 npm run build
 ```
@@ -73,6 +74,7 @@ Trước khi báo "xong": `lint`, `typecheck`, `test` phải qua. Đổi giao di
 - **Hiểu trước, viết sau.** Với yêu cầu lớn, tóm tắt kế hoạch (file sẽ đụng, `BR`/`TC` liên quan) rồi mới sửa.
 - Chỉ làm giai đoạn đang được yêu cầu (`docs/10-roadmap.md`). Mỗi lần một việc; không tiện tay sửa phần không liên quan.
 - Đổi `schema.prisma`: tạo migration (ràng buộc viết tay theo `docs/04` mục 3) và cập nhật `docs/04-data-model.md`.
+- Mỗi migration mới phải đọc lại SQL sinh ra; xóa mọi DROP nhắm vào đối tượng trong danh sách manual-db-objects (`docs/04` mục 3, `tests/integration/manual-db-objects.test.ts`).
 - Đổi một quyết định đã chốt: cập nhật file docs liên quan và thêm ADR mới trong `docs/03`.
 - Yêu cầu mơ hồ về nghiệp vụ mà docs chưa trả lời: **hỏi lại**, không tự đoán. Sau khi có câu trả lời, ghi vào docs.
 - Dữ liệu mẫu chỉ nằm trong `prisma/seed.ts`.

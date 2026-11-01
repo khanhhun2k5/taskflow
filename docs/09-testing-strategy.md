@@ -13,7 +13,7 @@ Lý do tỷ lệ này: logic khó nhất (tiến độ, burndown, lặp lịch, 
 ## 2. Quy ước
 
 - Test đơn vị đặt cạnh file nguồn: `burndown.ts` ↔ `burndown.test.ts`.
-- Test tích hợp: `tests/integration/*.test.ts`. Mỗi file chạy trên một schema PostgreSQL riêng, làm sạch dữ liệu giữa các test.
+- Test tích hợp: `tests/integration/*.test.ts`. Mỗi file chạy trên một schema PostgreSQL riêng, làm sạch dữ liệu giữa các test. `src/server/db.ts` đặt cả `search_path` theo `?schema=` để SQL thô (`$queryRaw`) cũng chạy trên schema đó; `manual-db-objects.test.ts` kiểm điều này.
 - Test E2E: `tests/e2e/*.spec.ts`. Chạy trên bản build production với DB đã seed.
 - Tên test bằng tiếng Việt hoặc tiếng Anh đều được, nhưng phải ghi mã: `it("TC-01 tiến độ = 0 khi không có việc", ...)`.
 - Không dùng thời gian thật: truyền `now` vào hàm thuần; test tích hợp dùng `vi.setSystemTime`.

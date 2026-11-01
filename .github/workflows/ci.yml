@@ -49,8 +49,9 @@ jobs:
       - run: npm ci
       - run: npm run lint
       - run: npm run typecheck
-      # Unit + component + integration (integration uses the postgres service).
-      - run: npm run test
+      # Unit + component + integration (integration uses the postgres service),
+      # with the NFR-61 line-coverage threshold.
+      - run: npm run test:coverage
       - run: npm run build
 
   e2e:

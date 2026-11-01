@@ -24,7 +24,7 @@ Phiên bản ghi theo **số chính** (major). Khi khởi tạo, cài bản ổn
 | Xác thực | Better Auth | Email + mật khẩu, Google OAuth, phiên lưu trong DB |
 | Đa ngôn ngữ | next-intl | Tiếng Việt mặc định, tiếng Anh |
 | Thứ tự sắp xếp | fractional-indexing | Khóa sắp xếp dạng chuỗi (ADR-05) |
-| Kiểm thử đơn vị/thành phần | Vitest + @testing-library/react + @testing-library/user-event + jsdom | Hàm thuần, schema, component |
+| Kiểm thử đơn vị/thành phần | Vitest + @vitest/coverage-v8 + @testing-library/react + @testing-library/user-event + jsdom | Hàm thuần, schema, component |
 | Kiểm thử đầu-cuối | Playwright + @axe-core/playwright | Luồng chính + kiểm tra truy cập (file 09 mục 5) |
 | Chất lượng mã | ESLint (cấu hình Next), prettier | |
 | Môi trường dev | Docker Compose (PostgreSQL) | |
@@ -259,6 +259,7 @@ npm run dev
 npm run lint
 npm run typecheck           # tsc --noEmit
 npm run test                # Vitest
+npm run test:coverage       # Vitest + độ phủ, ngưỡng 90% dòng (NFR-61)
 npm run test:e2e            # Playwright
 npm run build
 ```
@@ -269,6 +270,6 @@ GitHub Actions trên mỗi pull request:
 
 1. `npm ci`
 2. `npm run lint` và `npm run typecheck`
-3. `npm run test` (Vitest, có PostgreSQL dịch vụ cho test tích hợp)
+3. `npm run test:coverage` (Vitest, có PostgreSQL dịch vụ cho test tích hợp; dưới 90% dòng ở `features/*/domain` và `lib` thì đỏ, NFR-61)
 4. `npm run build`
 5. `npm run test:e2e` (chỉ trên nhánh `main` và PR có nhãn `e2e`, vì chậm)

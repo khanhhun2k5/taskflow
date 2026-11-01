@@ -50,6 +50,11 @@ Quy ước chung:
 - **Theo giai đoạn:** `schema.prisma` chỉ chứa model của các giai đoạn đã làm. P0 có `User`, `Session`, `Account`, `Verification`, `RateLimit` (migration `init_auth`); quan hệ từ `User` tới model nghiệp vụ và `extensions` được thêm ở giai đoạn giới thiệu chúng (MVP-1 trở đi).
 - Mọi bảng nghiệp vụ có `userId` và chỉ mục trên `userId`.
 - `createdAt`, `updatedAt` trên mọi bảng có thể sửa.
+- **Khác biệt có chủ ý của file thật so với bản đặc tả (MVP-1a, 2026-11-01):**
+  - Cột trỏ tới model của giai đoạn sau để `String?` **không có quan hệ** cho tới khi model đó ra đời, kèm `TODO`: `Board.courseId`, `Task.courseId` (MVP-2), `Task.sprintId`, `ActivityLog.sprintId` (MVP-3), `Task.seriesId` (P4). Cột và chỉ mục (`@@unique([seriesId, occurrenceDate])`…) tạo sẵn để khỏi sửa bảng `Task` về sau.
+  - `Board` và `Column` có quan hệ tới `User` (`User.boards`, `User.columns`, `onDelete: Cascade`); thêm `@@index([userId])` cho `Column` và `Label`. `TaskLabel` là bảng nối, không có `userId` (kiểm tra qua `Task`/`Label`, mục 4).
+  - Không khai báo `extensions = [...]` trong `datasource` (tính năng preview của Prisma, dễ báo lệch khi test dùng schema riêng). `unaccent` và `pg_trgm` được tạo trong SQL migration, xem mục 3.
+  - `Task.estimate` là `Decimal` trong DB; hàm thuần (`features/*/domain`) nhận `number`. Đổi kiểu ở tầng dịch vụ, không làm trong domain.
 
 ```prisma
 generator client {
@@ -471,7 +476,13 @@ model ActivityLog {
 
 ## 3. Ràng buộc viết tay trong migration
 
-Prisma không biểu diễn được các ràng buộc sau; thêm bằng SQL trong file migration (`npx prisma migrate dev --create-only`, sửa SQL, rồi áp dụng).
+Prisma không biểu diễn được các ràng buộc sau; thêm bằng SQL trong file migration.
+
+**Quy trình mỗi migration:** `npx prisma migrate dev --create-only --name <tên>` → **đọc lại SQL sinh ra; xóa mọi `DROP` (hoặc `ALTER … TYPE` đổi collation) nhắm vào đối tượng trong danh sách manual-db-objects** → thêm SQL viết tay nếu cần → `npx prisma migrate dev` → `npx prisma generate` (Prisma 7 không tự sinh lại client) → dò lệch bằng `npx prisma migrate dev --create-only --name drift_check`: phải ra migration rỗng, rồi xóa thư mục nháp đó.
+
+**Danh sách manual-db-objects** (đang có trong DB; mỗi mục được kiểm bởi `tests/integration/manual-db-objects.test.ts`, chạy trong CI trên schema dựng từ toàn bộ migration — migration nào lỡ xóa thì CI đỏ): `board_owner_xor`, `label_user_name_ci`, `task_estimate_nonneg`, `task_title_trgm`, hàm `f_unaccent`, collation `"C"` của `Task.order`, `Task.backlogOrder`, `Column.order`, extension `unaccent`, `pg_trgm`. Thêm đối tượng viết tay mới thì thêm vào cả danh sách này lẫn file test.
+
+**Extension:** tạo trong migration bằng `CREATE EXTENSION IF NOT EXISTS … WITH SCHEMA public`; `f_unaccent` gọi `public.unaccent`, chỉ mục dùng `public.gin_trgm_ops`. Lý do: test tích hợp chạy mỗi file trên một schema riêng mà extension là của cả database. `tests/integration/setup.ts` tạo extension trước dưới khóa advisory để các file test chạy song song không tranh nhau.
 
 Tên bảng và tên cột giữ **camelCase đúng như model Prisma** (không dùng `@map`), nên trong SQL luôn đặt trong ngoặc kép: `"Task"`, `"projectId"`, `"endAt"`. Viết không có ngoặc kép thì PostgreSQL đổi sang chữ thường và báo lỗi không tìm thấy cột.
 
@@ -492,6 +503,7 @@ Tên bảng và tên cột giữ **camelCase đúng như model Prisma** (không 
 
 Ghi chú:
 
+- Bảng trên gồm cả ràng buộc của các giai đoạn sau (`sprint_one_active`, `timeblock_*`, `grade_*`); chúng được thêm ở migration của giai đoạn tạo bảng tương ứng.
 - `unaccent()` mặc định không phải hàm `IMMUTABLE` nên PostgreSQL không cho dùng trực tiếp trong chỉ mục. Khi viết migration, bọc nó trong một hàm `IMMUTABLE` riêng (ví dụ `f_unaccent`) rồi dùng hàm đó cho cả chỉ mục lẫn truy vấn tìm kiếm.
 - Các cột `order` đặt collation `"C"` để so sánh theo byte, khớp với cách `fractional-indexing` sinh khóa (ADR-05). Sau đó Prisma `orderBy: { order: "asc" }` dùng bình thường, không cần SQL thô. Mỗi lần migration sau đụng tới các cột này, kiểm tra lại collation vẫn là `"C"` (TC-25).
 
