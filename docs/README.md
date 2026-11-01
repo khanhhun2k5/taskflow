@@ -16,6 +16,7 @@ Thư mục này chứa toàn bộ đặc tả của ứng dụng. `CLAUDE.md` �
 | 08 | [08-non-functional.md](08-non-functional.md) | Hiệu năng, bảo mật, truy cập, múi giờ, đa ngôn ngữ | Mọi lúc (ràng buộc chung) |
 | 09 | [09-testing-strategy.md](09-testing-strategy.md) | Chiến lược và danh sách ca kiểm thử (`TC-xx`) | Viết test |
 | 10 | [10-roadmap.md](10-roadmap.md) | Các giai đoạn, phạm vi và tiêu chí hoàn thành | Lập kế hoạch, báo cáo tiến độ |
+| — | [PROGRESS.md](PROGRESS.md) | Trạng thái hiện tại, việc tiếp theo, câu hỏi còn mở | Đầu mỗi phiên làm việc |
 
 ## Quy ước mã định danh
 
