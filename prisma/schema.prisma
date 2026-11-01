@@ -1,5 +1,7 @@
-// Spec: docs/04-data-model.md section 2. P0 contains only the auth tables;
-// relations to business models are added in the phase that introduces them.
+// Spec: docs/04-data-model.md section 2. Models are added in the phase that introduces
+// them; columns that point to later models are plain strings until then (see TODOs).
+// Hand-written SQL (CHECKs, expression indexes, collations, extensions) lives in the
+// migrations and is listed in tests/integration/manual-db-objects.test.ts.
 
 generator client {
   provider = "prisma-client"
@@ -24,8 +26,14 @@ model User {
   createdAt     DateTime @default(now()) @db.Timestamptz(3)
   updatedAt     DateTime @updatedAt @db.Timestamptz(3)
 
-  sessions Session[]
-  accounts Account[]
+  sessions     Session[]
+  accounts     Account[]
+  projects     Project[]
+  boards       Board[]
+  columns      Column[]
+  tasks        Task[]
+  labels       Label[]
+  activityLogs ActivityLog[]
 }
 
 model Session {
@@ -78,4 +86,197 @@ model RateLimit {
   key         String @unique
   count       Int
   lastRequest BigInt
+}
+
+// ───────────── Enums ─────────────
+
+enum StatusCategory {
+  TODO
+  IN_PROGRESS
+  DONE
+}
+
+enum Priority {
+  URGENT
+  HIGH
+  MEDIUM
+  LOW
+}
+
+enum Workflow {
+  KANBAN
+  SCRUM
+}
+
+enum EstimateUnit {
+  POINTS
+  HOURS
+}
+
+enum ProjectStatus {
+  ACTIVE
+  ARCHIVED
+}
+
+enum ActivityType {
+  TASK_CREATED
+  STATUS_CHANGED
+  ESTIMATE_CHANGED
+  DUE_CHANGED
+  ADDED_TO_SPRINT
+  REMOVED_FROM_SPRINT
+  DELETED
+  RESTORED
+}
+
+// ───────────── Projects and boards ─────────────
+
+model Project {
+  id           String        @id @default(cuid(2))
+  userId       String
+  name         String        @db.VarChar(120)
+  description  String?
+  color        String        @default("#6366F1")
+  workflow     Workflow      @default(KANBAN)
+  estimateUnit EstimateUnit  @default(POINTS)
+  status       ProjectStatus @default(ACTIVE)
+  startDate    DateTime?     @db.Date
+  endDate      DateTime?     @db.Date
+  deletedAt    DateTime?     @db.Timestamptz(3)
+  createdAt    DateTime      @default(now()) @db.Timestamptz(3)
+  updatedAt    DateTime      @updatedAt @db.Timestamptz(3)
+
+  user  User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  board Board?
+  tasks Task[]
+
+  @@index([userId, deletedAt])
+}
+
+model Board {
+  id        String   @id @default(cuid(2))
+  userId    String
+  projectId String?  @unique
+  courseId  String?  @unique // TODO(MVP-2): relation to Course
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+
+  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  project Project? @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  columns Column[]
+  // Hand-written: CHECK board_owner_xor (exactly one of projectId/courseId, ADR-04).
+
+  @@index([userId])
+}
+
+model Column {
+  id             String         @id @default(cuid(2))
+  userId         String
+  boardId        String
+  name           String         @db.VarChar(60)
+  statusCategory StatusCategory
+  order          String // fractional index; hand-written COLLATE "C" (ADR-05)
+  wipLimit       Int? // null = no limit (BR-28)
+  wipStrict      Boolean        @default(false)
+  createdAt      DateTime       @default(now()) @db.Timestamptz(3)
+  updatedAt      DateTime       @updatedAt @db.Timestamptz(3)
+
+  user  User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  board Board  @relation(fields: [boardId], references: [id], onDelete: Cascade)
+  tasks Task[]
+
+  @@index([userId])
+  @@index([boardId, order])
+}
+
+// ───────────── Tasks ─────────────
+
+model Task {
+  id             String         @id @default(cuid(2))
+  userId         String
+  title          String         @db.VarChar(300)
+  description    String? // Markdown
+  statusCategory StatusCategory @default(TODO) // ADR-03
+  priority       Priority       @default(MEDIUM)
+  startAt        DateTime?      @db.Timestamptz(3)
+  dueAt          DateTime?      @db.Timestamptz(3)
+  dueAllDay      Boolean        @default(true)
+  estimate       Decimal?       @db.Decimal(6, 2) // hand-written CHECK task_estimate_nonneg
+  isMilestone    Boolean        @default(false)
+  completedAt    DateTime?      @db.Timestamptz(3)
+  deletedAt      DateTime?      @db.Timestamptz(3)
+
+  projectId    String?
+  courseId     String? // TODO(MVP-2): relation to Course
+  columnId     String?
+  sprintId     String? // TODO(MVP-3): relation to Sprint
+  parentId     String?
+  order        String // order in column / inbox; hand-written COLLATE "C" (ADR-05)
+  backlogOrder String? // Scrum backlog order; hand-written COLLATE "C" (ADR-05)
+
+  seriesId       String? // TODO(P4): relation to RecurringSeries
+  occurrenceDate DateTime? @db.Date
+
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @db.Timestamptz(3)
+
+  user     User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  project  Project?      @relation(fields: [projectId], references: [id])
+  column   Column?       @relation(fields: [columnId], references: [id], onDelete: SetNull)
+  parent   Task?         @relation("Subtasks", fields: [parentId], references: [id])
+  subtasks Task[]        @relation("Subtasks")
+  labels   TaskLabel[]
+  activity ActivityLog[]
+  // Hand-written: GIN trigram index task_title_trgm on f_unaccent(lower(title)) (BR-82).
+
+  @@unique([seriesId, occurrenceDate]) // BR-73
+  @@index([userId, deletedAt, dueAt])
+  @@index([userId, statusCategory])
+  @@index([projectId, deletedAt])
+  @@index([courseId, deletedAt])
+  @@index([columnId, order])
+  @@index([sprintId])
+  @@index([parentId])
+}
+
+model Label {
+  id        String      @id @default(cuid(2))
+  userId    String
+  name      String      @db.VarChar(40)
+  color     String      @default("#64748B")
+  createdAt DateTime    @default(now()) @db.Timestamptz(3)
+  user      User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tasks     TaskLabel[]
+  // Hand-written: UNIQUE label_user_name_ci on ("userId", lower("name")) (BR-81).
+
+  @@index([userId])
+}
+
+// Join table: no userId; ownership is checked through Task and Label (docs/04 section 4).
+model TaskLabel {
+  taskId  String
+  labelId String
+  task    Task   @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  label   Label  @relation(fields: [labelId], references: [id], onDelete: Cascade)
+
+  @@id([taskId, labelId])
+  @@index([labelId])
+}
+
+// ───────────── Activity log ─────────────
+
+model ActivityLog {
+  id        String       @id @default(cuid(2))
+  userId    String
+  taskId    String
+  type      ActivityType
+  fromValue Json?
+  toValue   Json?
+  sprintId  String? // TODO(MVP-3): kept without relation, used to build burndown
+  at        DateTime     @default(now()) @db.Timestamptz(3)
+  user      User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  task      Task         @relation(fields: [taskId], references: [id], onDelete: Cascade)
+
+  @@index([sprintId, at])
+  @@index([taskId, at])
+  @@index([userId, at])
 }
