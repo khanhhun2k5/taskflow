@@ -36,7 +36,8 @@ Checklist "Xong khi" của P0 trong file 10: đạt cả 4 mục.
 |---|---|---|
 | a | Tầng dữ liệu (7 model, migration `mvp1_tasks_kanban` + SQL viết tay) và hàm thuần (`ordering.ts`, `progress.ts`, `wip.ts`); TC-01…07, TC-20…25 dạng hàm/tích hợp | Nhánh `mvp1-tasks-kanban`, chưa commit |
 | b | Tầng dịch vụ (`tasks`, `projects`, `boards`, `labels`) + 16 Route Handler; TC-12…17, TC-20…23, TC-21b ở mức HTTP; `assertInvariants` sau mỗi thao tác ghi | Nhánh `mvp1-tasks-kanban`, chưa commit |
-| c | Giao diện (Hộp thư, dự án, Kanban, Danh sách, `TaskDialog`, `QuickAdd`, Thùng rác), TC-91, TC-92 | Chưa bắt đầu |
+| c1 | Nền giao diện: TanStack Query + `api-client`, cập nhật lạc quan + toast "Thử lại", Hộp thư, danh sách dự án, trang dự án (cột tĩnh), `TaskDialog`, `QuickAdd`, Thùng rác, thanh bên có dự án thật; `P2034` tự thử lại → `409 CONFLICT` | Nhánh `mvp1-tasks-kanban`, chưa commit |
+| c2 | `KanbanBoard` kéo thả, `ListView` (lọc, sắp xếp, chọn nhiều, danh sách ảo), TC-91, TC-92 | Chưa bắt đầu |
 
 **Đã xử lý ở phần b:** đổi `Decimal → number` tại tầng dịch vụ (`decimalToNumber` trong `src/server/services/task-dto.ts`); TC-20…23 và TC-21b (đồng thời) kiểm ở mức HTTP (`tests/integration/wip-http.test.ts`).
 
@@ -44,12 +45,13 @@ Checklist "Xong khi" của P0 trong file 10: đạt cả 4 mục.
 
 - `GET /tasks?q=` lấy toàn bộ id khớp tiêu đề rồi lọc `id IN (…)`; nên đưa điều kiện `f_unaccent` vào chính truy vấn danh sách.
 - `GET /trash` nạp mọi mục đã xóa vào bộ nhớ rồi mới phân trang; trước P4 thùng rác không tự dọn (BR-12).
-- Lỗi xung đột giao dịch hiếm gặp (Prisma `P2034`) đang trả `500`; thứ tự khóa cố định đã loại các deadlock đã biết.
 - Độ phủ 90% (NFR-61) chỉ đo `features/*/domain` và `lib`; tầng dịch vụ và route được kiểm bằng test tích hợp, không có số đo độ phủ.
 
 ## Việc tiếp theo
 
-**MVP-1 phần c** (giao diện). PR của MVP-1 mở sau phần c.
+**MVP-1 phần c2** (Kanban kéo thả, `ListView`). PR của MVP-1 mở sau phần c2.
+
+**Giới hạn tạm của c1** (xử lý ở c2): Hộp thư và Thùng rác chỉ tải 200 mục đầu (có dòng báo khi còn nữa); trang dự án hiện cột dạng tĩnh, đổi trạng thái qua ô chọn cột trong `TaskDialog`; dự án đã lưu trữ vẫn mở được `TaskDialog`, thao tác ghi bị server từ chối (`PROJECT_ARCHIVED`) và hoàn tác kèm thông báo.
 
 ## Câu hỏi còn mở
 

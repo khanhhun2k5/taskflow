@@ -35,6 +35,7 @@
 | 409 | `SPRINT_ALREADY_ACTIVE` | BR-40 |
 | 409 | `SPRINT_NOT_ACTIVE` | Kết thúc sprint không ở trạng thái `ACTIVE` |
 | 409 | `LABEL_EXISTS` | Tên nhãn trùng, không phân biệt hoa thường (BR-81) |
+| 409 | `CONFLICT` | Giao dịch xung đột ghi hoặc deadlock (Prisma `P2034`) vẫn lỗi sau 3 lần chạy (server tự thử lại, `src/server/tx-retry.ts`). Client có thể thử lại |
 | 422 | `ESTIMATE_REQUIRED` | BR-41 |
 | 422 | `BOARD_NEEDS_TODO_AND_DONE` | BR-25 |
 | 422 | `SUBTASK_DEPTH_EXCEEDED` | BR-05 |
@@ -189,7 +190,7 @@ Thực hiện trong một giao dịch: lỗi ở một việc thì không đổi
 
 | Phương thức | Đường dẫn | Mô tả | GĐ |
 |---|---|---|---|
-| GET | `/projects` | Danh sách + tiến độ tóm tắt (`progress`: `P_w` nếu đủ ước lượng, ngược lại `P`; `overdueCount`). Lọc `status=ACTIVE\|ARCHIVED`; sắp mới nhất trước | MVP-1 |
+| GET | `/projects` | Danh sách + tiến độ tóm tắt (`progress`: `P_w` nếu đủ ước lượng, ngược lại `P`; `weightedReliable`: `true` khi `progress` là `P_w`, `false` thì giao diện hiện gợi ý thêm ước lượng — file 07 mục 3; `overdueCount`). Lọc `status=ACTIVE\|ARCHIVED`; sắp mới nhất trước | MVP-1 |
 | POST | `/projects` | Tạo dự án + bảng + 3 cột (BR-20) | MVP-1 |
 | GET | `/projects/:id` | Chi tiết | MVP-1 |
 | PATCH | `/projects/:id` | Sửa, đổi quy trình, lưu trữ | MVP-1 |

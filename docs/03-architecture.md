@@ -16,9 +16,11 @@ Phiên bản ghi theo **số chính** (major). Khi khởi tạo, cài bản ổn
 | Biểu đồ | Recharts | Burndown, velocity |
 | Form | react-hook-form + @hookform/resolvers (`zodResolver`) | Nối schema Zod vào form |
 | Kiểm tra dữ liệu | Zod 4 | Dùng chung cho form, API, biến môi trường |
-| Dữ liệu phía client | TanStack Query 5 | Bộ nhớ đệm, cập nhật lạc quan |
+| Dữ liệu phía client | TanStack Query 5 (`@tanstack/react-query` 5.105.0) | Bộ nhớ đệm, cập nhật lạc quan. Khóa query ở `src/features/query-keys.ts`; mutation lạc quan qua `src/features/optimistic.ts`; gọi API qua `src/lib/api-client.ts` |
 | Danh sách ảo | @tanstack/react-virtual | `ListView` > 100 dòng (file 06 mục 4.5) |
-| Hiển thị Markdown | react-markdown | Mô tả việc; **không** dùng `rehype-raw` hay cho phép HTML thô (NFR-14) |
+| Hiển thị Markdown | react-markdown (10.1.0) | Mô tả việc; **không** dùng `rehype-raw` hay cho phép HTML thô (NFR-14) |
+| Thông báo (toast) | sonner (2.0.8) | Phụ thuộc của component shadcn `sonner`; toast lỗi có nút "Thử lại" (NFR-51). Thêm ở MVP-1 c1, người dùng đồng ý ngày 2026-11-01 |
+| Chọn ngày | react-day-picker (10.0.2) | Phụ thuộc của component shadcn `calendar` (ô hạn trong `TaskDialog`). Thêm ở MVP-1 c1, người dùng đồng ý ngày 2026-11-01 |
 | ORM | Prisma 7 | Truy cập DB, migration |
 | Cơ sở dữ liệu | PostgreSQL 17 (mọi môi trường) | |
 | Xác thực | Better Auth | Email + mật khẩu, Google OAuth, phiên lưu trong DB |

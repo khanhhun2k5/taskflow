@@ -76,6 +76,7 @@ Bấm thẻ → mở `TaskDialog`. Thẻ có `role="button"` và nhãn đọc đ
 - Bên trái: tiêu đề (sửa tại chỗ), mô tả Markdown (xem/sửa), danh sách việc con (thêm bằng Enter, đánh dấu, kéo sắp xếp), lịch sử hoạt động.
 - Bên phải: trạng thái (chọn cột hoặc ô đánh dấu), ưu tiên, hạn (chọn ngày, công tắc "Cả ngày", giờ), ngày bắt đầu, ước lượng (kèm đơn vị của dự án), dự án, môn học, nhãn, mốc, nhắc hạn (P4), lặp lại (P4).
 - Lưu tự động sau 500 ms ngừng gõ; có dấu "Đã lưu".
+- Mở bằng tham số URL `?task=<id>` trên trang đang xem (MVP-1 c1): mọi trang dùng chung một hộp thoại, tải lại trang vẫn mở đúng việc, nút Quay lại đóng hộp thoại.
 - Trên điện thoại: mở toàn màn hình.
 
 ### 4.4 `KanbanBoard`
@@ -152,7 +153,7 @@ Mọi màn hình có dữ liệu phải thiết kế đủ 4 trạng thái:
 ## 7. Giao diện trực quan
 
 - Dùng biến màu (token) của shadcn/ui; chế độ sáng, tối, và theo hệ thống.
-- Màu môn học/dự án do người dùng chọn từ bảng 12 màu có sẵn, đã kiểm tra tương phản trên cả nền sáng và tối.
+- Màu môn học/dự án do người dùng chọn từ bảng 12 màu có sẵn, đã kiểm tra tương phản trên cả nền sáng và tối (`src/features/projects/domain/palette.ts`, test ≥ 3:1 với nền sáng và tối, NFR-22).
 - Màu ưu tiên: Khẩn cấp đỏ, Cao cam, Trung bình xanh dương, Thấp xám. Luôn đi kèm biểu tượng, không chỉ dựa vào màu.
 - Phông chữ: Inter (có đủ ký tự tiếng Việt), cỡ chữ nền 14px trên máy tính, 16px trên điện thoại.
 - Chữ hiển thị: lấy từ `messages/vi.json` / `messages/en.json`; không viết chuỗi cứng trong component.
