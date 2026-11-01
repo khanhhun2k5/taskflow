@@ -40,3 +40,27 @@ export function checkWip(column: WipColumn, columnTasks: WipTask[], moving: WipT
   if (!addsToCount) return { allowed: true, warning: over };
   return { allowed: !(over && column.wipStrict), warning: over };
 }
+
+/**
+ * Batch version of checkWip for bulk moves and column deletion: `moving` tasks are added to
+ * the column at once. Tasks already in the column and subtasks do not change the count.
+ */
+export function checkWipMany(
+  column: WipColumn,
+  columnTasks: WipTask[],
+  moving: WipTask[],
+): WipCheck {
+  if (column.wipLimit === null) return { allowed: true, warning: false };
+
+  const inColumn = new Set(columnTasks.filter((task) => !task.deleted).map((task) => task.id));
+  const added = new Set(
+    moving
+      .filter((task) => task.parentId === null && !task.deleted && !inColumn.has(task.id))
+      .map((task) => task.id),
+  ).size;
+  const after = wipCount(columnTasks) + added;
+  const over = after > column.wipLimit;
+
+  if (added === 0) return { allowed: true, warning: over };
+  return { allowed: !(over && column.wipStrict), warning: over };
+}

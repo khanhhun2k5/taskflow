@@ -75,5 +75,12 @@
       "addTask": "Add task",
       "viewWeek": "View week"
     }
+  },
+  "Board": {
+    "defaultColumns": {
+      "todo": "To do",
+      "inProgress": "In progress",
+      "done": "Done"
+    }
   }
 }

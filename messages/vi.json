@@ -75,5 +75,12 @@
       "addTask": "Thêm việc",
       "viewWeek": "Xem lịch tuần"
     }
+  },
+  "Board": {
+    "defaultColumns": {
+      "todo": "Cần làm",
+      "inProgress": "Đang làm",
+      "done": "Xong"
+    }
   }
 }

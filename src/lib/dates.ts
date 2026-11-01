@@ -60,3 +60,21 @@ export function isOverdue(
   }
   return now.getTime() > dueAt.getTime();
 }
+
+/**
+ * "YYYY-MM-DD" → Date at 00:00 UTC, the representation Prisma uses for `@db.Date` columns
+ * (plain dates without a time, NFR-30). Throws on malformed or impossible dates.
+ */
+export function parseIsoDate(value: string): Date {
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
+  const date = match
+    ? new Date(Date.UTC(Number(match[1]), Number(match[2]) - 1, Number(match[3])))
+    : null;
+  if (!date || formatIsoDate(date) !== value) throw new RangeError(`Invalid ISO date: ${value}`);
+  return date;
+}
+
+/** Inverse of parseIsoDate: a `@db.Date` value → "YYYY-MM-DD". */
+export function formatIsoDate(date: Date): string {
+  return date.toISOString().slice(0, 10);
+}
