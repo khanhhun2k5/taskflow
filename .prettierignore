@@ -9,3 +9,5 @@ package-lock.json
 next-env.d.ts
 docs
 CLAUDE.md
+src/generated
+prisma/migrations
