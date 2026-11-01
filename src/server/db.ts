@@ -1,6 +1,7 @@
 import { PrismaPg } from "@prisma/adapter-pg";
-import { PrismaClient } from "@/generated/prisma/client";
+import { PrismaClient, type Prisma } from "@/generated/prisma/client";
 import { getEnv } from "@/lib/env";
+import { withTxRetry } from "@/server/tx-retry";
 
 function createPrismaClient(): PrismaClient {
   const connectionString = getEnv().DATABASE_URL;
@@ -20,4 +21,16 @@ export const prisma = globalForPrisma.prisma ?? createPrismaClient();
 
 if (process.env.NODE_ENV !== "production") {
   globalForPrisma.prisma = prisma;
+}
+
+/**
+ * `prisma.$transaction` with automatic retry on Prisma P2034 (write conflict / deadlock):
+ * 3 attempts in total, then 409 CONFLICT (src/server/tx-retry.ts). Use this instead of
+ * calling `prisma.$transaction` directly.
+ */
+export function transaction<T>(
+  fn: (tx: Prisma.TransactionClient) => Promise<T>,
+  options?: Parameters<PrismaClient["$transaction"]>[1],
+): Promise<T> {
+  return withTxRetry(() => prisma.$transaction(fn, options));
 }

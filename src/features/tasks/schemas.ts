@@ -128,3 +128,34 @@ export type Warning = "WIP_LIMIT_EXCEEDED";
 export type WithWarnings<T> = T & { warnings: Warning[] };
 
 export const trashQuerySchema = z.strictObject({ ...pageQueryShape });
+
+/** ActivityLog types (docs/04, BR-95). */
+export type ActivityType =
+  | "TASK_CREATED"
+  | "STATUS_CHANGED"
+  | "ESTIMATE_CHANGED"
+  | "DUE_CHANGED"
+  | "ADDED_TO_SPRINT"
+  | "REMOVED_FROM_SPRINT"
+  | "DELETED"
+  | "RESTORED";
+
+export type ActivityDTO = {
+  id: string;
+  type: ActivityType;
+  fromValue: unknown;
+  toValue: unknown;
+  at: string;
+};
+
+/** GET /tasks/:id (docs/05 section 2.2). */
+export type TaskDetailDTO = TaskDTO & { subtasks: TaskDTO[]; activity: ActivityDTO[] };
+
+/** GET /trash item (docs/05 section 2.2). */
+export type TrashItemDTO = {
+  type: "task" | "project";
+  id: string;
+  title: string;
+  projectId: string | null;
+  deletedAt: string;
+};

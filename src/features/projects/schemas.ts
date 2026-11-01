@@ -64,7 +64,11 @@ export type ProjectDTO = {
   updatedAt: string;
 };
 
-export type ProjectListItemDTO = ProjectDTO & { progress: number; overdueCount: number };
+export type ProjectListItemDTO = ProjectDTO & {
+  progress: number; // P_w when weightedReliable, otherwise P (docs/07 section 3), 0–100
+  weightedReliable: boolean; // false → the UI shows P with the "add estimates" hint
+  overdueCount: number;
+};
 
 export type ProjectProgressDTO = {
   count: number; // P (docs/07 section 2), 0–100, not rounded
@@ -74,3 +78,8 @@ export type ProjectProgressDTO = {
   total: number;
   overdue: TaskDTO[];
 };
+
+/** `?status=` of /projects → filter value; anything unknown means ACTIVE. */
+export function projectStatusFromParam(value: string | null | undefined): "ACTIVE" | "ARCHIVED" {
+  return value === "ARCHIVED" ? "ARCHIVED" : "ACTIVE";
+}

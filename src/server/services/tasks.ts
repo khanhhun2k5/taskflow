@@ -4,7 +4,9 @@ import type {
   CreateTaskInput,
   ListTasksQuery,
   MoveTaskInput,
+  TaskDetailDTO,
   TaskDTO,
+  TrashItemDTO,
   UpdateTaskInput,
   Warning,
   WithWarnings,
@@ -12,7 +14,7 @@ import type {
 import type { Prisma, StatusCategory } from "@/generated/prisma/client";
 import { startOfDayInTz } from "@/lib/dates";
 import { toPage, type Page } from "@/lib/pagination";
-import { prisma } from "@/server/db";
+import { prisma, transaction } from "@/server/db";
 import { AppError } from "@/server/errors";
 import {
   assertActive,
@@ -242,7 +244,7 @@ export async function createTask(
   input: CreateTaskInput,
   now: Date,
 ): Promise<WithWarnings<TaskDTO>> {
-  return prisma.$transaction(async (tx) => {
+  return transaction(async (tx) => {
     const { timezone } = await getUserSettings(tx, userId);
     const labelIds = [...new Set(input.labelIds ?? [])];
     await assertLabelsOwned(tx, userId, labelIds);
@@ -275,15 +277,8 @@ export async function createTask(
 
 // ───────────── Read ─────────────
 
-export type ActivityDTO = {
-  id: string;
-  type: string;
-  fromValue: Prisma.JsonValue;
-  toValue: Prisma.JsonValue;
-  at: string;
-};
-
-export type TaskDetailDTO = TaskDTO & { subtasks: TaskDTO[]; activity: ActivityDTO[] };
+// DTO types live in features/tasks/schemas.ts so client code can use them; re-exported here.
+export type { ActivityDTO, TaskDetailDTO, TrashItemDTO } from "@/features/tasks/schemas";
 
 export async function getTask(userId: string, taskId: string, now: Date): Promise<TaskDetailDTO> {
   await findOwnedTask(prisma, userId, taskId);
@@ -440,7 +435,7 @@ export async function updateTask(
   input: UpdateTaskInput,
   now: Date,
 ): Promise<WithWarnings<TaskDTO>> {
-  return prisma.$transaction(async (tx) => {
+  return transaction(async (tx) => {
     const task = await findOwnedTask(tx, userId, taskId);
     assertActive(task.project);
     const { timezone } = await getUserSettings(tx, userId);
@@ -505,7 +500,7 @@ export async function moveTask(
   input: MoveTaskInput,
   now: Date,
 ): Promise<WithWarnings<TaskDTO>> {
-  return prisma.$transaction(async (tx) => {
+  return transaction(async (tx) => {
     const task = await findOwnedTask(tx, userId, taskId);
     assertActive(task.project);
     if (task.parentId !== null) {
@@ -534,7 +529,7 @@ export async function moveTask(
 // ───────────── Delete / restore ─────────────
 
 export async function deleteTask(userId: string, taskId: string, now: Date): Promise<void> {
-  await prisma.$transaction(async (tx) => {
+  await transaction(async (tx) => {
     const task = await findOwnedTask(tx, userId, taskId);
     assertActive(task.project);
     await softDeleteTasks(tx, userId, [task.id], now);
@@ -546,7 +541,7 @@ export async function restoreTask(
   taskId: string,
   now: Date,
 ): Promise<WithWarnings<TaskDTO>> {
-  return prisma.$transaction(async (tx) => {
+  return transaction(async (tx) => {
     const task = await tx.task.findFirst({
       where: { id: taskId, userId, deletedAt: { not: null } },
       include: {
@@ -609,7 +604,7 @@ export type BulkResult = { updated: number; warnings: Warning[] };
 
 /** All-or-nothing: any unknown id or failed rule rolls back the whole batch (TC-17). */
 export async function bulkUpdate(userId: string, input: BulkInput, now: Date): Promise<BulkResult> {
-  return prisma.$transaction(async (tx) => {
+  return transaction(async (tx) => {
     const ids = [...new Set(input.ids)];
     const tasks = await tx.task.findMany({
       where: { id: { in: ids }, userId, deletedAt: null },
@@ -696,14 +691,6 @@ export async function bulkUpdate(userId: string, input: BulkInput, now: Date): P
 }
 
 // ───────────── Trash ─────────────
-
-export type TrashItemDTO = {
-  type: "task" | "project";
-  id: string;
-  title: string;
-  projectId: string | null;
-  deletedAt: string;
-};
 
 const sameInstant = (a: Date | null | undefined, b: Date) => a?.getTime() === b.getTime();
 

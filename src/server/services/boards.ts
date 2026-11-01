@@ -9,7 +9,7 @@ import type {
 import type { Warning } from "@/features/tasks/schemas";
 import type { Column, StatusCategory } from "@/generated/prisma/client";
 import { keyAtIndex } from "@/lib/ordering";
-import { prisma } from "@/server/db";
+import { prisma, transaction } from "@/server/db";
 import { AppError } from "@/server/errors";
 import {
   assertActive,
@@ -125,7 +125,7 @@ export async function createColumn(
   boardId: string,
   input: CreateColumnInput,
 ): Promise<ColumnDTO> {
-  return prisma.$transaction(async (tx) => {
+  return transaction(async (tx) => {
     const board = await findOwnedBoard(tx, userId, boardId);
     assertActive(board.project);
     const order = await columnKeyAt(tx, await lockBoardColumns(tx, board.id), input);
@@ -154,7 +154,7 @@ export async function updateColumn(
   input: UpdateColumnInput,
   now: Date,
 ): Promise<ColumnDTO> {
-  return prisma.$transaction(async (tx) => {
+  return transaction(async (tx) => {
     const found = await findOwnedColumn(tx, userId, columnId);
     assertActive(found.project);
     // Lock the board's columns before reading anything, so a concurrent move into this column
@@ -186,7 +186,7 @@ export async function moveColumn(
   columnId: string,
   input: MoveColumnInput,
 ): Promise<ColumnDTO> {
-  return prisma.$transaction(async (tx) => {
+  return transaction(async (tx) => {
     const column = await findOwnedColumn(tx, userId, columnId);
     assertActive(column.project);
     if (input.beforeId === column.id || input.afterId === column.id) {
@@ -208,7 +208,7 @@ export async function deleteColumn(
   moveTo: string | undefined,
   now: Date,
 ): Promise<{ warnings: Warning[] }> {
-  return prisma.$transaction(async (tx) => {
+  return transaction(async (tx) => {
     const found = await findOwnedColumn(tx, userId, columnId);
     assertActive(found.project);
     // Ownership of moveTo first (404 for another user's id), then lock the whole board.

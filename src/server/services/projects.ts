@@ -16,7 +16,7 @@ import type { Locale } from "@/i18n/locales";
 import { formatIsoDate, isOverdue, parseIsoDate } from "@/lib/dates";
 import { keysForAppend } from "@/lib/ordering";
 import { toPage, type Page } from "@/lib/pagination";
-import { prisma } from "@/server/db";
+import { prisma, transaction } from "@/server/db";
 import { AppError } from "@/server/errors";
 import en from "../../../messages/en.json";
 import vi from "../../../messages/vi.json";
@@ -89,16 +89,18 @@ const toProgressItem = (row: ProgressRow): ProgressItem => ({
 });
 
 /** docs/07 section 3: show P_w when enough tasks are estimated, otherwise P. */
-function displayedProgress(items: ProgressItem[]): number {
+function displayedProgress(items: ProgressItem[]): { progress: number; weightedReliable: boolean } {
   const weighted = weightedProgress(items);
-  return weighted.reliable ? weighted.percent : countProgress(items).percent;
+  return weighted.reliable
+    ? { progress: weighted.percent, weightedReliable: true }
+    : { progress: countProgress(items).percent, weightedReliable: false };
 }
 
 export async function createProject(
   userId: string,
   input: CreateProjectInput,
 ): Promise<ProjectDTO> {
-  return prisma.$transaction(async (tx) => {
+  return transaction(async (tx) => {
     const { locale } = await getUserSettings(tx, userId);
     const project = await tx.project.create({
       data: {
@@ -160,7 +162,7 @@ export async function listProjects(
       const own = tasks.filter((task) => task.projectId === project.id);
       return {
         ...toProjectDTO(project),
-        progress: displayedProgress(own.map(toProgressItem)),
+        ...displayedProgress(own.map(toProgressItem)),
         overdueCount: own.filter((task) =>
           isOverdue(task.dueAt, task.dueAllDay, task.statusCategory, now, timezone),
         ).length,
@@ -178,7 +180,7 @@ export async function updateProject(
   projectId: string,
   input: UpdateProjectInput,
 ): Promise<ProjectDTO> {
-  return prisma.$transaction(async (tx) => {
+  return transaction(async (tx) => {
     const project = await findOwnedProject(tx, userId, projectId);
     // BR-22: an archived project only accepts a PATCH that un-archives it.
     if (input.status !== "ACTIVE") assertActive(project);
@@ -207,7 +209,7 @@ export async function updateProject(
 
 /** BR-11 with the BR-10 rule: the project and its live tasks share one deletedAt. */
 export async function deleteProject(userId: string, projectId: string, now: Date): Promise<void> {
-  await prisma.$transaction(async (tx) => {
+  await transaction(async (tx) => {
     const project = await findOwnedProject(tx, userId, projectId);
     const tasks = await tx.task.findMany({
       where: { projectId: project.id, userId, deletedAt: null },
@@ -232,7 +234,7 @@ export async function restoreProject(
   projectId: string,
   now: Date,
 ): Promise<ProjectDTO> {
-  return prisma.$transaction(async (tx) => {
+  return transaction(async (tx) => {
     const project = await tx.project.findFirst({
       where: { id: projectId, userId, deletedAt: { not: null } },
     });

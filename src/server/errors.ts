@@ -7,6 +7,7 @@ export const ERROR_STATUS = {
   SPRINT_ALREADY_ACTIVE: 409,
   SPRINT_NOT_ACTIVE: 409,
   LABEL_EXISTS: 409,
+  CONFLICT: 409, // Prisma P2034 still failing after 3 attempts (src/server/tx-retry.ts)
   ESTIMATE_REQUIRED: 422,
   BOARD_NEEDS_TODO_AND_DONE: 422,
   SUBTASK_DEPTH_EXCEEDED: 422,
